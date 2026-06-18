@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#121212">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MotoTrack - Bera BRZ200</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface-light: #252525;
+    --text: #f0f0f0;
+    --text-secondary: #a0a0a0;
+    --accent: #ff8c00;
+    --accent-dark: #e67e00;
+    --danger: #ff3b30;
+    --warning: #ffcc00;
+    --success: #34c759;
+    --info: #0a84ff;
+    --border: #333;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; height: 100%; overflow: hidden; }
+  #app { height: 100%; display: flex; flex-direction: column; }
+
+  /* Scroll area */
+  .scroll-area { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 100px; -webkit-overflow-scrolling: touch; }
+
+  /* Typography */
+  h1 { font-size: 1.4rem; margin: 0 0 12px; font-weight: 700; }
+  h2 { font-size: 1.1rem; margin: 0 0 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+  h3 { font-size: 1rem; margin: 0 0 8px; font-weight: 600; }
+
+  /* Cards */
+  .card { background: var(--surface); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+  .card-highlight { border-left: 4px solid var(--accent); }
+  .card-danger { border-left: 4px solid var(--danger); }
+  .card-warning { border-left: 4px solid var(--warning); }
+
+  /* Buttons */
+  .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: var(--radius-sm); font-size: 1.05rem; font-weight: 600; cursor: pointer; text-align: center; margin-bottom: 10px; transition: transform 0.1s, opacity 0.2s; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-secondary { background: var(--surface-light); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-small { display: inline-block; width: auto; padding: 8px 14px; font-size: 0.9rem; margin: 0; }
+
+  /* Forms */
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500; }
+  input, select { width: 100%; padding: 14px; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 1.1rem; outline: none; }
+  input:focus, select:focus { border-color: var(--accent); }
+  .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .checkbox-row input { width: auto; transform: scale(1.3); }
+
+  /* Fuel Gauge */
+  .gauge-container { display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
+  .gauge { width: 180px; height: 180px; border-radius: 50%; background: conic-gradient(var(--accent) calc(var(--pct) * 3.6deg), var(--surface-light) 0deg); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 20px rgba(255,140,0,0.15); }
+  .gauge-inner { width: 150px; height: 150px; border-radius: 50%; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .gauge-value { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
+  .gauge-label { font-size: 0.85rem; color: var(--text-secondary); }
+
+  /* Stats grid */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-box { background: var(--surface-light); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+  .stat-value { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+
+  /* Lists */
+  .list-item { background: var(--surface-light); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .list-item-info { flex: 1; }
+  .list-item-title { font-weight: 600; margin-bottom: 2px; }
+  .list-item-sub { font-size: 0.8rem; color: var(--text-secondary); }
+  .list-item-right { text-align: right; }
+  .list-item-value { font-weight: 700; color: var(--accent); }
+
+  /* Alerts */
+  .alert { padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .alert-danger { background: rgba(255,59,48,0.15); color: var(--danger); border: 1px solid var(--danger); }
+  .alert-warning { background: rgba(255,204,0,0.15); color: var(--warning); border: 1px solid var(--warning); }
+  .alert-success { background: rgba(52,199,89,0.15); color: var(--success); border: 1px solid var(--success); }
+
+  /* Bottom Nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 100; }
+  .nav-item { flex: 1; text-align: center; padding: 6px; cursor: pointer; color: var(--text-secondary); font-size: 0.7rem; font-weight: 500; transition: color 0.2s; }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 1.4rem; display: block; margin-bottom: 2px; }
+
+  /* Section visibility */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Header */
+  .app-header { padding: 16px 16px 0; display: flex; justify-content: space-between; align-items: center; }
+  .app-header h1 { margin: 0; }
+  .moto-name { font-size: 0.8rem; color: var(--accent); font-weight: 700; background: rgba(255,140,0,0.15); padding: 4px 10px; border-radius: 20px; }
+
+  /* Trip mode */
+  .trip-result { margin-top: 16px; }
+  .trip-status { font-size: 1.2rem; font-weight: 700; text-align: center; padding: 16px; border-radius: var(--radius-sm); margin-bottom: 10px; }
+  .trip-ok { background: rgba(52,199,89,0.15); color: var(--success); }
+  .trip-bad { background: rgba(255,59,48,0.15); color: var(--danger); }
+
+  /* Chart bars */
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-top: 10px; }
+  .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 4px; opacity: 0.8; }
+  .bar-label { font-size: 0.65rem; color: var(--text-secondary); text-align: center; white-space: nowrap; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.active { display: flex; }
+  .modal-content { background: var(--surface); border-radius: var(--radius); width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px; border: 1px solid var(--border); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .modal-close { font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+  .empty-icon { font-size: 3rem; margin-bottom: 10px; opacity: 0.5; }
+
+  /* Utility */
+  .text-center { text-align: center; }
+  .mb-0 { margin-bottom: 0; }
+  .mt-10 { margin-top: 10px; }
+  .flex { display: flex; gap: 10px; }
+  .flex > * { flex: 1; }
+
+  /* Scrollbar hide */
+  ::-webkit-scrollbar { width: 0px; background: transparent; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="app-header">
+    <h1>MotoTrack</h1>
+    <span class="moto-name">Bera BRZ200</span>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="section-dashboard" class="section active">
+    <div class="scroll-area">
+      <div id="dash-alerts"></div>
+
+      <div class="card">
+        <div class="gauge-container">
+          <div class="gauge" id="fuel-gauge" style="--pct:0">
+            <div class="gauge-inner">
+              <div class="gauge-value" id="fuel-liters">--</div>
+              <div class="gauge-label">litros restantes</div>
+            </div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="fuel-autonomy">--</div>
+            <div class="stat-label">km autonomía</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="fuel-consumption">--</div>
+            <div class="stat-label">km / litro</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="fuel-km-since">--</div>
+            <div class="stat-label">km recorridos</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="fuel-pct">--</div>
+            <div class="stat-label">% tanque</div>
+          </div>
+        </div>
+        <div style="margin-top:8px; text-align:center; color:var(--text-secondary); font-size:0.8rem;" id="fuel-last-date">Último registro: --</div>
+      </div>
+
+      <div class="card" id="oil-card">
+        <h3>🔧 Próximo Cambio de Aceite</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="oil-days">--</div>
+            <div class="stat-label">días restantes</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="oil-km">--</div>
+            <div class="stat-label">km restantes</div>
+          </div>
+        </div>
+        <div id="oil-detail" style="margin-top:8px; font-size:0.85rem; color:var(--text-secondary);"></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="openModal('refuel')">⛽ Registrar Repostaje</button>
+      <button class="btn btn-secondary" onclick="openModal('maintenance')">🔧 Registrar Mantenimiento</button>
+      <button class="btn btn-secondary" onclick="navigate('trip')">🗺️ Modo Viaje</button>
+    </div>
+  </div>
+
+  <!-- REFUELINGS -->
+  <div id="section-refuelings" class="section">
+    <div class="scroll-area">
+      <h2>Historial de Repostajes</h2>
+      <div id="refuelings-list"></div>
+      <div id="refuelings-empty" class="empty" style="display:none">
+        <div class="empty-icon">⛽</div>
+        <div>No hay repostajes registrados</div>
+      </div>
+
+      <h2 style="margin-top:20px;">Estadísticas</h2>
+      <div class="card">
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="stat-total-spent">--</div>
+            <div class="stat-label">gastado este mes</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-avg-price">--</div>
+            <div class="stat-label">precio promedio</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-month-liters">--</div>
+            <div class="stat-label">litros este mes</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-total-refuels">--</div>
+            <div class="stat-label">repostajes</div>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:20px;">Evolución de Precio</h2>
+      <div class="card" id="price-chart-card">
+        <div class="bar-chart" id="price-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAINTENANCE -->
+  <div id="section-maintenance" class="section">
+    <div class="scroll-area">
+      <h2>Historial de Aceite</h2>
+      <div id="maintenance-list"></div>
+      <div id="maintenance-empty" class="empty" style="display:none">
+        <div class="empty-icon">🔧</div>
+        <div>No hay mantenimientos registrados</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIP -->
+  <div id="section-trip" class="section">
+    <div class="scroll-area">
+      <h2>Modo Viaje</h2>
+      <div class="card">
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:0;">Ingresa los kilómetros que planeas recorrer para saber si llegas con tu gasolina actual.</p>
+        <div class="form-group">
+          <label>Kilómetros a recorrer</label>
+          <input type="number" id="trip-km" placeholder="Ej: 120">
+        </div>
+        <button class="btn btn-primary" onclick="calculateTrip()">Calcular</button>
+        <div id="trip-result" class="trip-result"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3>Estado actual</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="trip-current-fuel">--</div>
+            <div class="stat-label">litros disponibles</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="trip-current-autonomy">--</div>
+            <div class="stat-label">km autonomía</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="section-settings" class="section">
+    <div class="scroll-area">
+      <h2>Configuración</h2>
+      <div class="card">
+        <div class="form-group">
+          <label>Capacidad del tanque (litros)</label>
+          <input type="number" id="cfg-tank" value="14">
+        </div>
+        <div class="form-group">
+          <label>Alerta de reserva (litros)</label>
+          <input type="number" id="cfg-reserve" value="2">
+        </div>
+        <div class="form-group">
+          <label>Intervalo aceite por días</label>
+          <input type="number" id="cfg-oil-days" value="75">
+        </div>
+        <div class="form-group">
+          <label>Intervalo aceite por km</label>
+          <input type="number" id="cfg-oil-km" value="2000">
+        </div>
+        <div class="form-group">
+          <label>Consumo manual km/l (opcional)</label>
+          <input type="number" id="cfg-manual-consumption" placeholder="Dejar en blanco para auto">
+        </div>
+        <button class="btn btn-primary" onclick="saveConfig()">Guardar Configuración</button>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3>Respaldo de Datos</h3>
+        <p style="font-size:0.85rem; color:var(--text-secondary);">Todo se guarda en este celular. Exporta un archivo JSON para respaldo.</p>
+        <button class="btn btn-secondary" onclick="exportData()">📤 Exportar Datos</button>
+        <div class="form-group" style="margin-top:10px;">
+          <label>Importar datos (JSON)</label>
+          <input type="file" id="import-file" accept=".json" onchange="importData(this)">
+        </div>
+        <button class="btn btn-danger" onclick="resetAll()" style="margin-top:10px;">⚠️ Borrar Todos los Datos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Título</h3>
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </div>
+    <div class="nav-item" onclick="navigate('refuelings')">
+      <span class="nav-icon">⛽</span>
+      <span>Repostajes</span>
+    </div>
+    <div class="nav-item" onclick="navigate('maintenance')">
+      <span class="nav-icon">🔧</span>
+      <span>Aceite</span>
+    </div>
+    <div class="nav-item" onclick="navigate('settings')">
+      <span class="nav-icon">⚙️</span>
+      <span>Ajustes</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========================
+   STORAGE & DATA
+   ======================== */
+const STORAGE_KEYS = {
+  config: 'mototrack_config',
+  refuelings: 'mototrack_refuelings',
+  maintenances: 'mototrack_maintenances',
+  currentKm: 'mototrack_current_km'
+};
+
+const DEFAULT_CONFIG = {
+  tankCapacity: 14,
+  reserveAlert: 2,
+  oilIntervalDays: 75,
+  oilIntervalKm: 2000,
+  manualConsumption: null
+};
+
+function getConfig() {
+  const raw = localStorage.getItem(STORAGE_KEYS.config);
+  return raw ? { ...DEFAULT_CONFIG, ...JSON.parse(raw) } : { ...DEFAULT_CONFIG };
+}
+
+function saveConfigObj(cfg) {
+  localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(cfg));
+}
+
+function getRefuelings() {
+  const raw = localStorage.getItem(STORAGE_KEYS.refuelings);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveRefuelings(list) {
+  localStorage.setItem(STORAGE_KEYS.refuelings, JSON.stringify(list));
+}
+
+function getMaintenances() {
+  const raw = localStorage.getItem(STORAGE_KEYS.maintenances);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveMaintenances(list) {
+  localStorage.setItem(STORAGE_KEYS.maintenances, JSON.stringify(list));
+}
+
+function getCurrentKm() {
+  const raw = localStorage.getItem(STORAGE_KEYS.currentKm);
+  if (raw) return parseFloat(raw);
+  const refs = getRefuelings();
+  return refs.length > 0 ? refs[refs.length - 1].km : 62430; // default from user
+}
+
+function setCurrentKm(km) {
+  localStorage.setItem(STORAGE_KEYS.currentKm, String(km));
+}
+
+/* ========================
+   CALCULATIONS
+   ======================== */
+function calculateConsumption() {
+  const refs = getRefuelings().sort((a, b) => a.km - b.km);
+  const cfg = getConfig();
+  if (cfg.manualConsumption) return parseFloat(cfg.manualConsumption);
+  if (refs.length < 2) return 35; // default estimate for BRZ200
+
+  const consumptions = [];
+  for (let i = 1; i < refs.length; i++) {
+    const prev = refs[i - 1];
+    const curr = refs[i];
+    if (prev.fullTank && prev.liters > 0) {
+      const kmDiff = curr.km - prev.km;
+      if (kmDiff > 0) {
+        consumptions.push(kmDiff / prev.liters);
+      }
+    }
+  }
+  if (consumptions.length === 0) return 35;
+  return consumptions.reduce((a, b) => a + b, 0) / consumptions.length;
+}
+
+function getFuelStatus() {
+  const refs = getRefuelings().sort((a, b) => a.km - b.km);
+  const cfg = getConfig();
+  const consumption = calculateConsumption();
+  const currentKm = getCurrentKm();
+
+  if (refs.length === 0) {
+    return { remaining: cfg.tankCapacity, autonomy: cfg.tankCapacity * consumption, pct: 100, consumption, kmSince: 0, lastDate: null };
+  }
+
+  const last = refs[refs.length - 1];
+  const kmSince = Math.max(0, currentKm - last.km);
+  const litersConsumed = kmSince / consumption;
+  const remaining = Math.max(0, last.liters - litersConsumed);
+  const pct = Math.min(100, Math.max(0, (remaining / cfg.tankCapacity) * 100));
+  const autonomy = remaining * consumption;
+
+  return { remaining, autonomy, pct, consumption, kmSince, lastDate: last.date };
+}
+
+function getOilStatus() {
+  const mains = getMaintenances().filter(m => m.type === 'oil').sort((a, b) => new Date(a.date) - new Date(b.date));
+  const cfg = getConfig();
+  const currentKm = getCurrentKm();
+
+  if (mains.length === 0) return null;
+  const last = mains[mains.length - 1];
+  const nextDate = new Date(last.date);
+  nextDate.setDate(nextDate.getDate() + (last.intervalDays || cfg.oilIntervalDays));
+  const nextKm = last.km + (last.intervalKm || cfg.oilIntervalKm);
+
+  const now = new Date();
+  const daysLeft = Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24));
+  const kmLeft = nextKm - currentKm;
+
+  return { daysLeft, kmLeft, nextDate, nextKm, last, brand: last.brand, viscosity: last.viscosity };
+}
+
+/* ========================
+   RENDERING
+   ======================== */
+function renderDashboard() {
+  const fuel = getFuelStatus();
+  const cfg = getConfig();
+  const oil = getOilStatus();
+
+  // Fuel gauge
+  document.getElementById('fuel-gauge').style.setProperty('--pct', fuel.pct);
+  document.getElementById('fuel-liters').textContent = fuel.remaining.toFixed(1);
+  document.getElementById('fuel-autonomy').textContent = Math.floor(fuel.autonomy);
+  document.getElementById('fuel-consumption').textContent = fuel.consumption.toFixed(1);
+  document.getElementById('fuel-km-since').textContent = Math.floor(fuel.kmSince);
+  document.getElementById('fuel-pct').textContent = Math.floor(fuel.pct) + '%';
+  document.getElementById('fuel-last-date').textContent = fuel.lastDate 
+    ? 'Último registro: ' + formatDate(fuel.lastDate) 
+    : 'Sin repostajes registrados';
+
+  // Alerts
+  const alerts = document.getElementById('dash-alerts');
+  alerts.innerHTML = '';
+  if (fuel.remaining <= cfg.reserveAlert && fuel.remaining > 0) {
+    alerts.innerHTML += '<div class="alert alert-danger">⚠️ RESERVA: Aproximadamente ' + fuel.remaining.toFixed(1) + ' litros restantes. ¡Repostá pronto!</div>';
+  } else if (fuel.remaining <= cfg.reserveAlert * 1.5) {
+    alerts.innerHTML += '<div class="alert alert-warning">⛽ Gasolina baja. Considerá repostar.</div>';
+  }
+  if (fuel.remaining <= 0) {
+    alerts.innerHTML += '<div class="alert alert-danger">🚨 Sin estimación de gasolina. Registrá un repostaje.</div>';
+  }
+
+  // Oil
+  const oilCard = document.getElementById('oil-card');
+  if (!oil) {
+    oilCard.style.display = 'none';
+  } else {
+    oilCard.style.display = 'block';
+    const daysColor = oil.daysLeft <= 7 ? 'var(--danger)' : (oil.daysLeft <= 15 ? 'var(--warning)' : 'var(--success)');
+    const kmColor = oil.kmLeft <= 300 ? 'var(--danger)' : (oil.kmLeft <= 600 ? 'var(--warning)' : 'var(--success)');
+    document.getElementById('oil-days').textContent = oil.daysLeft;
+    document.getElementById('oil-days').style.color = daysColor;
+    document.getElementById('oil-km').textContent = oil.kmLeft;
+    document.getElementById('oil-km').style.color = kmColor;
+    document.getElementById('oil-detail').innerHTML = 
+      'Último: <strong>' + oil.brand + ' ' + oil.viscosity + '</strong> el ' + formatDate(oil.last.date) + ' a los ' + oil.last.km + ' km';
+
+    if (oil.daysLeft <= 7 || oil.kmLeft <= 300) {
+      alerts.innerHTML += '<div class="alert alert-warning">🔧 Cambio de aceite próximo: ' + 
+        (oil.daysLeft <= 0 ? '¡Vencido por tiempo!' : oil.daysLeft + ' días / ') + 
+        (oil.kmLeft <= 0 ? '¡Vencido por km!' : oil.kmLeft + ' km') + '</div>';
+    }
+  }
+}
+
+function renderRefuelings() {
+  const refs = getRefuelings().sort((a, b) => b.km - a.km);
+  const list = document.getElementById('refuelings-list');
+  const empty = document.getElementById('refuelings-empty');
+
+  if (refs.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('price-chart').innerHTML = '<div class="empty" style="padding:20px;">Sin datos</div>';
+    return;
+  }
+  empty.style.display = 'none';
+
+  let html = '';
+  refs.forEach((r, idx) => {
+    const total = (r.liters * r.pricePerLiter).toFixed(0);
+    const consumption = idx < refs.length - 1 ? ((refs[idx+1].km - r.km) / r.liters).toFixed(1) + ' km/L' : 'N/A';
+    html += '<div class="list-item">' +
+      '<div class="list-item-info">' +
+        '<div class="list-item-title">' + formatDate(r.date) + ' • ' + r.km + ' km</div>' +
+        '<div class="list-item-sub">' + r.liters + 'L @ $' + r.pricePerLiter + '/L' + (r.fullTank ? ' • Tanque lleno' : '') + '</div>' +
+      '</div>' +
+      '<div class="list-item-right">' +
+        '<div class="list-item-value">$' + total + '</div>' +
+        '<div class="list-item-sub">' + consumption + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  list.innerHTML = html;
+
+  // Stats
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const thisYear = now.getFullYear();
+  let monthSpent = 0, monthLiters = 0, totalRefuels = refs.length, avgPriceSum = 0;
+
+  refs.forEach(r => {
+    const d = new Date(r.date);
+    avgPriceSum += r.pricePerLiter;
+    if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
+      monthSpent += r.liters * r.pricePerLiter;
+      monthLiters += r.liters;
+    }
+  });
+
+  document.getElementById('stat-total-spent').textContent = '$' + Math.floor(monthSpent).toLocaleString();
+  document.getElementById('stat-avg-price').textContent = '$' + (avgPriceSum / refs.length).toFixed(0);
+  document.getElementById('stat-month-liters').textContent = monthLiters.toFixed(1);
+  document.getElementById('stat-total-refuels').textContent = totalRefuels;
+
+  // Price chart (last 6 refuelings, oldest first)
+  const chartRefs = refs.slice(0, 6).reverse();
+  const maxPrice = Math.max(...chartRefs.map(r => r.pricePerLiter));
+  let chartHtml = '';
+  chartRefs.forEach(r => {
+    const h = Math.max(10, (r.pricePerLiter / maxPrice) * 100);
+    chartHtml += '<div class="bar-wrapper">' +
+      '<div class="bar" style="height:' + h + 'px"></div>' +
+      '<div class="bar-label">$' + r.pricePerLiter + '<br><small>' + formatDateShort(r.date) + '</small></div>' +
+    '</div>';
+  });
+  document.getElementById('price-chart').innerHTML = chartHtml;
+}
+
+function renderMaintenance() {
+  const mains = getMaintenances().filter(m => m.type === 'oil').sort((a, b) => new Date(b.date) - new Date(a.date));
+  const list = document.getElementById('maintenance-list');
+  const empty = document.getElementById('maintenance-empty');
+
+  if (mains.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  let html = '';
+  mains.forEach(m => {
+    html += '<div class="list-item">' +
+      '<div class="list-item-info">' +
+        '<div class="list-item-title">' + m.brand + ' ' + m.viscosity + '</div>' +
+        '<div class="list-item-sub">' + formatDate(m.date) + ' • ' + m.km + ' km' + (m.notes ? ' • ' + m.notes : '') + '</div>' +
+      '</div>' +
+      '<div class="list-item-right">' +
+        '<div class="list-item-value">' + (m.intervalKm || 2000) + ' km</div>' +
+        '<div class="list-item-sub">cada ' + (m.intervalDays || 75) + ' días</div>' +
+      '</div>' +
+    '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function renderTrip() {
+  const fuel = getFuelStatus();
+  document.getElementById('trip-current-fuel').textContent = fuel.remaining.toFixed(1);
+  document.getElementById('trip-current-autonomy').textContent = Math.floor(fuel.autonomy);
+}
+
+function renderSettings() {
+  const cfg = getConfig();
+  document.getElementById('cfg-tank').value = cfg.tankCapacity;
+  document.getElementById('cfg-reserve').value = cfg.reserveAlert;
+  document.getElementById('cfg-oil-days').value = cfg.oilIntervalDays;
+  document.getElementById('cfg-oil-km').value = cfg.oilIntervalKm;
+  document.getElementById('cfg-manual-consumption').value = cfg.manualConsumption || '';
+}
+
+/* ========================
+   NAVIGATION
+   ======================== */
+function navigate(section) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + section).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  if (section === 'dashboard') renderDashboard();
+  if (section === 'refuelings') renderRefuelings();
+  if (section === 'maintenance') renderMaintenance();
+  if (section === 'trip') renderTrip();
+  if (section === 'settings') renderSettings();
+}
+
+/* ========================
+   MODALS & FORMS
+   ======================== */
+function openModal(type) {
+  const modal = document.getElementById('modal');
+  const body = document.getElementById('modal-body');
+  const title = document.getElementById('modal-title');
+  modal.classList.add('active');
+
+  if (type === 'refuel') {
+    title.textContent = 'Registrar Repostaje';
+    const currentKm = getCurrentKm();
+    body.innerHTML = 
+      '<div class="form-group"><label>Fecha</label><input type="date" id="ref-date" value="' + today() + '"></div>' +
+      '<div class="form-group"><label>Kilometraje del odómetro</label><input type="number" id="ref-km" value="' + (currentKm || '') + '" placeholder="Ej: 62500"></div>' +
+      '<div class="form-group"><label>Litros cargados</label><input type="number" id="ref-liters" step="0.1" placeholder="Ej: 14"></div>' +
+      '<div class="form-group"><label>Precio por litro</label><input type="number" id="ref-price" step="0.01" placeholder="Ej: 0.50"></div>' +
+      '<div class="checkbox-row"><input type="checkbox" id="ref-full" checked><label for="ref-full" style="margin:0">Tanque lleno (llenado completo)</label></div>' +
+      '<button class="btn btn-primary" onclick="saveRefuel()">Guardar Repostaje</button>';
+  } else if (type === 'maintenance') {
+    title.textContent = 'Registrar Cambio de Aceite';
+    const currentKm = getCurrentKm();
+    const cfg = getConfig();
+    body.innerHTML = 
+      '<div class="form-group"><label>Fecha</label><input type="date" id="mnt-date" value="' + today() + '"></div>' +
+      '<div class="form-group"><label>Kilometraje</label><input type="number" id="mnt-km" value="' + (currentKm || '') + '" placeholder="Ej: 62500"></div>' +
+      '<div class="form-group"><label>Marca del aceite</label><input type="text" id="mnt-brand" placeholder="Ej: Castrol, Mobil, Valvoline"></div>' +
+      '<div class="form-group"><label>Viscosidad</label><select id="mnt-viscosity"><option>20W-50</option><option>10W-40</option><option>15W-40</option><option>10W-30</option><option>Otro</option></select></div>' +
+      '<div class="form-group"><label>Próximo cambio en días</label><input type="number" id="mnt-days" value="' + cfg.oilIntervalDays + '"></div>' +
+      '<div class="form-group"><label>Próximo cambio en km</label><input type="number" id="mnt-km-int" value="' + cfg.oilIntervalKm + '"></div>' +
+      '<div class="form-group"><label>Notas (opcional)</label><input type="text" id="mnt-notes" placeholder="Ej: Filtro nuevo, ajuste de válvulas"></div>' +
+      '<button class="btn btn-primary" onclick="saveMaintenance()">Guardar Mantenimiento</button>';
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+function saveRefuel() {
+  const date = document.getElementById('ref-date').value;
+  const km = parseFloat(document.getElementById('ref-km').value);
+  const liters = parseFloat(document.getElementById('ref-liters').value);
+  const price = parseFloat(document.getElementById('ref-price').value);
+  const full = document.getElementById('ref-full').checked;
+
+  if (!date || !km || !liters || !price) { alert('Completá todos los campos'); return; }
+  if (km < getCurrentKm() && getRefuelings().length > 0) { 
+    if (!confirm('El kilometraje es menor al anterior. ¿Está correcto?')) return; 
+  }
+
+  const refs = getRefuelings();
+  refs.push({ id: Date.now(), date, km, liters, pricePerLiter: price, fullTank: full });
+  refs.sort((a, b) => a.km - b.km);
+  saveRefuelings(refs);
+  setCurrentKm(km);
+  closeModal();
+  renderDashboard();
+  renderRefuelings();
+}
+
+function saveMaintenance() {
+  const date = document.getElementById('mnt-date').value;
+  const km = parseFloat(document.getElementById('mnt-km').value);
+  const brand = document.getElementById('mnt-brand').value;
+  const viscosity = document.getElementById('mnt-viscosity').value;
+  const days = parseInt(document.getElementById('mnt-days').value);
+  const kmInt = parseInt(document.getElementById('mnt-km-int').value);
+  const notes = document.getElementById('mnt-notes').value;
+
+  if (!date || !km || !brand || !viscosity) { alert('Completá los campos obligatorios'); return; }
+
+  const mains = getMaintenances();
+  mains.push({ id: Date.now(), type: 'oil', date, km, brand, viscosity, intervalDays: days, intervalKm: kmInt, notes });
+  saveMaintenances(mains);
+  setCurrentKm(km);
+  closeModal();
+  renderDashboard();
+  renderMaintenance();
+}
+
+function saveConfig() {
+  const cfg = {
+    tankCapacity: parseFloat(document.getElementById('cfg-tank').value) || 14,
+    reserveAlert: parseFloat(document.getElementById('cfg-reserve').value) || 2,
+    oilIntervalDays: parseInt(document.getElementById('cfg-oil-days').value) || 75,
+    oilIntervalKm: parseInt(document.getElementById('cfg-oil-km').value) || 2000,
+    manualConsumption: document.getElementById('cfg-manual-consumption').value ? parseFloat(document.getElementById('cfg-manual-consumption').value) : null
+  };
+  saveConfigObj(cfg);
+  alert('Configuración guardada');
+  renderDashboard();
+}
+
+function calculateTrip() {
+  const km = parseFloat(document.getElementById('trip-km').value);
+  if (!km || km <= 0) { alert('Ingresá los kilómetros'); return; }
+
+  const fuel = getFuelStatus();
+  const needed = km / fuel.consumption;
+  const result = document.getElementById('trip-result');
+
+  if (needed <= fuel.remaining) {
+    const leftover = fuel.remaining - needed;
+    result.innerHTML = 
+      '<div class="trip-status trip-ok">✅ LLEGÁS BIEN</div>' +
+      '<div class="card">' +
+        '<p>Litros necesarios: <strong>' + needed.toFixed(1) + 'L</strong></p>' +
+        '<p>Te sobrarían aprox: <strong>' + leftover.toFixed(1) + 'L</strong></p>' +
+        '<p style="font-size:0.85rem; color:var(--text-secondary);">Conducción normal, sin excesos.</p>' +
+      '</div>';
+  } else {
+    const missing = needed - fuel.remaining;
+    const stopKm = fuel.autonomy;
+    result.innerHTML = 
+      '<div class="trip-status trip-bad">❌ NO LLEGÁS</div>' +
+      '<div class="card">' +
+        '<p>Necesitás: <strong>' + needed.toFixed(1) + 'L</strong></p>' +
+        '<p>Te faltan: <strong>' + missing.toFixed(1) + 'L</strong></p>' +
+        '<p>Autonomía actual: <strong>' + Math.floor(fuel.autonomy) + ' km</strong></p>' +
+        '<p style="color:var(--danger); font-weight:600;">Repostá antes de los ' + Math.floor(stopKm) + ' km</p>' +
+      '</div>';
+  }
+}
+
+/* ========================
+   BACKUP / RESET
+   ======================== */
+function exportData() {
+  const data = {
+    config: getConfig(),
+    refuelings: getRefuelings(),
+    maintenances: getMaintenances(),
+    currentKm: getCurrentKm(),
+    exportDate: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mototrack_backup_' + today() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.config) saveConfigObj(data.config);
+      if (data.refuelings) saveRefuelings(data.refuelings);
+      if (data.maintenances) saveMaintenances(data.maintenances);
+      if (data.currentKm) setCurrentKm(data.currentKm);
+      alert('Datos importados correctamente');
+      renderDashboard();
+      renderRefuelings();
+      renderMaintenance();
+    } catch (err) {
+      alert('Error al importar: archivo inválido');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function resetAll() {
+  if (confirm('¿Borrar TODOS los datos? Esta acción no se puede deshacer.')) {
+    localStorage.removeItem(STORAGE_KEYS.config);
+    localStorage.removeItem(STORAGE_KEYS.refuelings);
+    localStorage.removeItem(STORAGE_KEYS.maintenances);
+    localStorage.removeItem(STORAGE_KEYS.currentKm);
+    alert('Datos borrados');
+    location.reload();
+  }
+}
+
+/* ========================
+   UTILS
+   ======================== */
+function today() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatDateShort(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+}
+
+/* ========================
+   INIT
+   ======================== */
+// Fix nav active states
+const navItems = document.querySelectorAll('.nav-item');
+navItems.forEach((item, idx) => {
+  item.addEventListener('click', function() {
+    navItems.forEach(n => n.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// Initial render
+renderDashboard();
+</script>
+</body>
+</html>
