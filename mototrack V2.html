@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#121212">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MotoTrack - Bera BRZ200</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--surface-light:#252525;--text:#f0f0f0;--text-secondary:#a0a0a0;--accent:#ff8c00;--accent-dark:#e67e00;--danger:#ff3b30;--warning:#ffcc00;--success:#34c759;--info:#0a84ff;--border:#333;--radius:16px;--radius-sm:10px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;height:100%;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column}
+.scroll-area{flex:1;overflow-y:auto;padding:16px;padding-bottom:100px;-webkit-overflow-scrolling:touch}
+h1{font-size:1.4rem;margin:0 0 12px;font-weight:700}
+h2{font-size:1.1rem;margin:0 0 10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+h3{font-size:1rem;margin:0 0 8px;font-weight:600}
+.card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--border)}
+.btn{display:block;width:100%;padding:16px;border:none;border-radius:var(--radius-sm);font-size:1.05rem;font-weight:600;cursor:pointer;text-align:center;margin-bottom:10px;transition:transform .1s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);color:#000}
+.btn-secondary{background:var(--surface-light);color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:var(--danger);color:#fff}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:.85rem;color:var(--text-secondary);margin-bottom:6px;font-weight:500}
+input,select,textarea{width:100%;padding:14px;background:var(--surface-light);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:1.1rem;outline:none;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:80px;resize:vertical;font-size:1rem}
+.checkbox-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.checkbox-row input{width:auto;transform:scale(1.3)}
+.gauge-container{display:flex;flex-direction:column;align-items:center;padding:20px 0}
+.gauge{width:180px;height:180px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--pct)*3.6deg),var(--surface-light) 0deg);display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 0 20px rgba(255,140,0,.15)}
+.gauge-inner{width:150px;height:150px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge-value{font-size:2.2rem;font-weight:700;color:var(--accent)}
+.gauge-label{font-size:.85rem;color:var(--text-secondary)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-box{background:var(--surface-light);border-radius:var(--radius-sm);padding:12px;text-align:center}
+.stat-value{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:.75rem;color:var(--text-secondary);margin-top:4px}
+.list-item{background:var(--surface-light);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.list-item-info{flex:1}
+.list-item-title{font-weight:600;margin-bottom:2px}
+.list-item-sub{font-size:.8rem;color:var(--text-secondary)}
+.list-item-right{text-align:right}
+.list-item-value{font-weight:700;color:var(--accent)}
+.alert{padding:12px;border-radius:var(--radius-sm);margin-bottom:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+.alert-danger{background:rgba(255,59,48,.15);color:var(--danger);border:1px solid var(--danger)}
+.alert-warning{background:rgba(255,204,0,.15);color:var(--warning);border:1px solid var(--warning)}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:100}
+.nav-item{flex:1;text-align:center;padding:6px;cursor:pointer;color:var(--text-secondary);font-size:.7rem;font-weight:500;transition:color .2s}
+.nav-item.active{color:var(--accent)}
+.nav-icon{font-size:1.4rem;display:block;margin-bottom:2px}
+.section{display:none}
+.section.active{display:block}
+.app-header{padding:16px 16px 0;display:flex;justify-content:space-between;align-items:center}
+.app-header h1{margin:0}
+.moto-name{font-size:.8rem;color:var(--accent);font-weight:700;background:rgba(255,140,0,.15);padding:4px 10px;border-radius:20px}
+.trip-result{margin-top:16px}
+.trip-status{font-size:1.2rem;font-weight:700;text-align:center;padding:16px;border-radius:var(--radius-sm);margin-bottom:10px}
+.trip-ok{background:rgba(52,199,89,.15);color:var(--success)}
+.trip-bad{background:rgba(255,59,48,.15);color:var(--danger)}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:120px;margin-top:10px}
+.bar-wrapper{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;background:var(--accent);border-radius:4px 4px 0 0;min-height:4px;opacity:.8}
+.bar-label{font-size:.65rem;color:var(--text-secondary);text-align:center;white-space:nowrap}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal-content{background:var(--surface);border-radius:var(--radius);width:100%;max-height:90vh;overflow-y:auto;padding:20px;border:1px solid var(--border)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-close{font-size:1.5rem;color:var(--text-secondary);cursor:pointer}
+.empty{text-align:center;padding:40px 20px;color:var(--text-secondary)}
+.empty-icon{font-size:3rem;margin-bottom:10px;opacity:.5}
+.flex{display:flex;gap:10px}
+.flex>*{flex:1}
+.tag{display:inline-block;padding:3px 8px;border-radius:12px;font-size:.7rem;font-weight:600;margin-left:6px}
+.tag-expense-fuel{background:rgba(255,140,0,.2);color:var(--accent)}
+.tag-expense-soat{background:rgba(10,132,255,.2);color:var(--info)}
+.tag-expense-insurance{background:rgba(52,199,89,.2);color:var(--success)}
+.tag-expense-parts{background:rgba(175,82,222,.2);color:#af52de}
+.tag-expense-repair{background:rgba(255,59,48,.2);color:var(--danger)}
+.tag-expense-other{background:rgba(160,160,160,.2);color:var(--text-secondary)}
+.photo-preview{width:100%;max-height:200px;object-fit:cover;border-radius:var(--radius-sm);margin-top:8px;border:1px solid var(--border)}
+.photo-thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
+.qr-container{display:flex;flex-direction:column;align-items:center;padding:20px}
+.qr-container canvas{border-radius:var(--radius-sm);background:#fff;padding:10px}
+.qr-container p{margin-top:10px;font-size:.85rem;color:var(--text-secondary);text-align:center}
+.camera-overlay{position:fixed;inset:0;background:#000;z-index:300;display:none;flex-direction:column}
+.camera-overlay.active{display:flex}
+.camera-video{flex:1;object-fit:cover}
+.camera-controls{padding:20px;background:var(--surface);display:flex;justify-content:center;gap:20px}
+.camera-btn{width:70px;height:70px;border-radius:50%;border:4px solid var(--text);background:var(--danger);cursor:pointer}
+.camera-cancel{background:var(--surface-light);color:var(--text);border:1px solid var(--border);padding:12px 24px;border-radius:var(--radius-sm);font-size:1rem;cursor:pointer}
+.scan-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center}
+.scan-overlay.active{display:flex}
+.scan-video{width:100%;max-width:400px}
+.scan-frame{position:absolute;width:250px;height:250px;border:3px solid var(--accent);border-radius:var(--radius)}
+.scan-cancel{margin-top:20px;background:var(--surface);color:var(--text);border:1px solid var(--border);padding:12px 30px;border-radius:var(--radius-sm);font-size:1rem;cursor:pointer}
+.expense-total-bar{background:var(--surface-light);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.expense-total-label{font-size:.85rem;color:var(--text-secondary)}
+.expense-total-value{font-size:1.4rem;font-weight:700;color:var(--accent)}
+.trip-partial-card{background:var(--surface-light);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;border-left:3px solid var(--info)}
+.trip-partial-title{font-weight:600;margin-bottom:4px}
+.trip-partial-sub{font-size:.8rem;color:var(--text-secondary)}
+.trip-partial-km{font-size:1.6rem;font-weight:700;color:var(--info)}
+::-webkit-scrollbar{width:0;background:transparent}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="app-header"><h1>MotoTrack</h1><span class="moto-name">Bera BRZ200</span></div>
+
+<!-- DASHBOARD -->
+<div id="section-dashboard" class="section active">
+<div class="scroll-area">
+<div id="dash-alerts"></div>
+<div class="card">
+<div class="gauge-container">
+<div class="gauge" id="fuel-gauge" style="--pct:0">
+<div class="gauge-inner">
+<div class="gauge-value" id="fuel-liters">--</div>
+<div class="gauge-label">litros restantes</div>
+</div>
+</div>
+</div>
+<div class="stats-grid">
+<div class="stat-box"><div class="stat-value" id="fuel-autonomy">--</div><div class="stat-label">km autonomia</div></div>
+<div class="stat-box"><div class="stat-value" id="fuel-consumption">--</div><div class="stat-label">km / litro</div></div>
+<div class="stat-box"><div class="stat-value" id="fuel-km-since">--</div><div class="stat-label">km recorridos</div></div>
+<div class="stat-box"><div class="stat-value" id="fuel-pct">--</div><div class="stat-label">% tanque</div></div>
+</div>
+<div style="margin-top:8px;text-align:center;color:var(--text-secondary);font-size:.8rem" id="fuel-last-date">Ultimo registro: --</div>
+</div>
+
+<div class="card" id="trip-partial-card">
+<h3>📍 Trip Parcial</h3>
+<div id="trip-partial-active" style="display:none">
+<div class="trip-partial-card">
+<div class="trip-partial-title" id="tp-name">Viaje actual</div>
+<div class="trip-partial-sub">Desde <span id="tp-start-km">--</span> km</div>
+<div class="trip-partial-km"><span id="tp-current-km">--</span> km recorridos</div>
+</div>
+<div class="flex">
+<button class="btn btn-primary" onclick="updateTripPartial()" style="margin-bottom:0">Actualizar km</button>
+<button class="btn btn-secondary" onclick="resetTripPartial()" style="margin-bottom:0">Finalizar</button>
+</div>
+</div>
+<div id="trip-partial-inactive">
+<p style="color:var(--text-secondary);font-size:.9rem">No hay trip parcial activo. Inicia uno para contar km de un trayecto especifico.</p>
+<button class="btn btn-primary" onclick="startTripPartial()">Iniciar Trip Parcial</button>
+</div>
+</div>
+
+<div class="card" id="oil-card">
+<h3>🔧 Proximo Cambio de Aceite</h3>
+<div class="stats-grid">
+<div class="stat-box"><div class="stat-value" id="oil-days">--</div><div class="stat-label">dias restantes</div></div>
+<div class="stat-box"><div class="stat-value" id="oil-km">--</div><div class="stat-label">km restantes</div></div>
+</div>
+<div id="oil-detail" style="margin-top:8px;font-size:.85rem;color:var(--text-secondary)"></div>
+</div>
+
+<button class="btn btn-primary" onclick="openModal('refuel')">⛽ Registrar Repostaje</button>
+<button class="btn btn-secondary" onclick="openModal('maintenance')">🔧 Registrar Cambio Aceite</button>
+<button class="btn btn-secondary" onclick="openModal('repair')">🛠️ Registrar Averia/Reparacion</button>
+<button class="btn btn-secondary" onclick="openModal('expense')">💰 Registrar Gasto</button>
+<button class="btn btn-secondary" onclick="navigate('trip')">🗺️ Modo Viaje</button>
+</div>
+</div>
+
+<!-- REFUELINGS -->
+<div id="section-refuelings" class="section">
+<div class="scroll-area">
+<h2>Historial de Repostajes</h2>
+<div id="refuelings-list"></div>
+<div id="refuelings-empty" class="empty" style="display:none"><div class="empty-icon">⛽</div><div>No hay repostajes registrados</div></div>
+<h2 style="margin-top:20px">Estadisticas</h2>
+<div class="card">
+<div class="stats-grid">
+<div class="stat-box"><div class="stat-value" id="stat-total-spent">--</div><div class="stat-label">gastado este mes</div></div>
+<div class="stat-box"><div class="stat-value" id="stat-avg-price">--</div><div class="stat-label">precio promedio</div></div>
+<div class="stat-box"><div class="stat-value" id="stat-month-liters">--</div><div class="stat-label">litros este mes</div></div>
+<div class="stat-box"><div class="stat-value" id="stat-total-refuels">--</div><div class="stat-label">repostajes</div></div>
+</div>
+</div>
+<h2 style="margin-top:20px">Evolucion de Precio</h2>
+<div class="card" id="price-chart-card"><div class="bar-chart" id="price-chart"></div></div>
+</div>
+</div>
+
+<!-- MAINTENANCE -->
+<div id="section-maintenance" class="section">
+<div class="scroll-area">
+<h2>Historial de Aceite</h2>
+<div id="maintenance-list"></div>
+<div id="maintenance-empty" class="empty" style="display:none"><div class="empty-icon">🔧</div><div>No hay mantenimientos registrados</div></div>
+<h2 style="margin-top:20px">Averias y Reparaciones</h2>
+<div id="repairs-list"></div>
+<div id="repairs-empty" class="empty" style="display:none"><div class="empty-icon">🛠️</div><div>No hay averias registradas</div></div>
+</div>
+</div>
+
+<!-- EXPENSES -->
+<div id="section-expenses" class="section">
+<div class="scroll-area">
+<h2>Gastos Totales</h2>
+<div class="card">
+<div class="expense-total-bar"><span class="expense-total-label">Este mes</span><span class="expense-total-value" id="exp-month-total">$0</span></div>
+<div class="stats-grid">
+<div class="stat-box"><div class="stat-value" id="exp-fuel">$0</div><div class="stat-label">combustible</div></div>
+<div class="stat-box"><div class="stat-value" id="exp-soat">$0</div><div class="stat-label">SOAT/docs</div></div>
+<div class="stat-box"><div class="stat-value" id="exp-insurance">$0</div><div class="stat-label">seguro</div></div>
+<div class="stat-box"><div class="stat-value" id="exp-parts">$0</div><div class="stat-label">repuestos</div></div>
+<div class="stat-box"><div class="stat-value" id="exp-repair">$0</div><div class="stat-label">reparaciones</div></div>
+<div class="stat-box"><div class="stat-value" id="exp-other">$0</div><div class="stat-label">otros</div></div>
+</div>
+</div>
+<h2 style="margin-top:20px">Historial de Gastos</h2>
+<div id="expenses-list"></div>
+<div id="expenses-empty" class="empty" style="display:none"><div class="empty-icon">💰</div><div>No hay gastos registrados</div></div>
+<h2 style="margin-top:20px">Costo por km</h2>
+<div class="card">
+<div class="stats-grid">
+<div class="stat-box"><div class="stat-value" id="cost-per-km">$0</div><div class="stat-label">costo total / km</div></div>
+<div class="stat-box"><div class="stat-value" id="cost-fuel-per-km">$0</div><div class="stat-label">solo combustible / km</div></div>
+</div>
+<p style="font-size:.8rem;color:var(--text-secondary);margin-top:8px">Incluye combustible, SOAT, seguro, repuestos, reparaciones y otros gastos registrados.</p>
+</div>
+</div>
+</div>
+
+<!-- TRIP -->
+<div id="section-trip" class="section">
+<div class="scroll-area">
+<h2>Modo Viaje</h2>
+<div class="card">
+<p style="color:var(--text-secondary);font-size:.9rem;margin-top:0">Ingresa los kilometros que planeas recorrer para saber si llegas con tu gasolina actual.</p>
+<div class="form-group"><label>Kilometros a recorrer</label><input type="number" id="trip-km" placeholder="Ej: 120"></div>
+<button class="btn btn-primary" onclick="calculateTrip()">Calcular</button>
+<div id="trip-result" class="trip-result"></div>
+</div>
+<div class="card" style="margin-top:12px">
+<h3>Estado actual</h3>
+<div class="stats-grid">
+<div class="stat-box"><div class="stat-value" id="trip-current-fuel">--</div><div class="stat-label">litros disponibles</div></div>
+<div class="stat-box"><div class="stat-value" id="trip-current-autonomy">--</div><div class="stat-label">km autonomia</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SETTINGS -->
+<div id="section-settings" class="section">
+<div class="scroll-area">
+<h2>Configuracion</h2>
+<div class="card">
+<div class="form-group"><label>Capacidad del tanque (litros)</label><input type="number" id="cfg-tank" value="14"></div>
+<div class="form-group"><label>Alerta de reserva (litros)</label><input type="number" id="cfg-reserve" value="2"></div>
+<div class="form-group"><label>Intervalo aceite por dias</label><input type="number" id="cfg-oil-days" value="75"></div>
+<div class="form-group"><label>Intervalo aceite por km</label><input type="number" id="cfg-oil-km" value="2000"></div>
+<div class="form-group"><label>Consumo manual km/l (opcional)</label><input type="number" id="cfg-manual-consumption" placeholder="Dejar en blanco para auto"></div>
+<button class="btn btn-primary" onclick="saveConfig()">Guardar Configuracion</button>
+</div>
+<div class="card" style="margin-top:12px">
+<h3>Respaldo de Datos</h3>
+<p style="font-size:.85rem;color:var(--text-secondary)">Todo se guarda en este celular. Exporta un archivo JSON o usa QR para migrar a otro celular.</p>
+<button class="btn btn-secondary" onclick="exportData()">📤 Exportar JSON</button>
+<div class="form-group" style="margin-top:10px"><label>Importar datos (JSON)</label><input type="file" id="import-file" accept=".json" onchange="importData(this)"></div>
+<button class="btn btn-secondary" onclick="openQRModal()" style="margin-top:10px">📱 Sincronizar por QR</button>
+<button class="btn btn-danger" onclick="resetAll()" style="margin-top:10px">⚠️ Borrar Todos los Datos</button>
+</div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+<div class="modal-content">
+<div class="modal-header"><h3 id="modal-title">Titulo</h3><span class="modal-close" onclick="closeModal()">&times;</span></div>
+<div id="modal-body"></div>
+</div>
+</div>
+
+<!-- QR MODAL -->
+<div class="modal-overlay" id="qr-modal">
+<div class="modal-content">
+<div class="modal-header"><h3>Sincronizacion por QR</h3><span class="modal-close" onclick="closeQRModal()">&times;</span></div>
+<div id="qr-modal-body">
+<div class="qr-container"><div id="qr-canvas"></div><p id="qr-text">Genera un QR para transferir tus datos a otro celular</p></div>
+<div class="flex" style="margin-top:16px">
+<button class="btn btn-primary" onclick="generateQR()" style="margin-bottom:0">Generar QR</button>
+<button class="btn btn-secondary" onclick="scanQR()" style="margin-bottom:0">Escanear QR</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- CAMERA OVERLAY -->
+<div class="camera-overlay" id="camera-overlay">
+<video class="camera-video" id="camera-video" autoplay playsinline></video>
+<div class="camera-controls">
+<button class="camera-cancel" onclick="cancelCamera()">Cancelar</button>
+<button class="camera-btn" onclick="takePhoto()"></button>
+</div>
+</div>
+
+<!-- SCAN OVERLAY -->
+<div class="scan-overlay" id="scan-overlay">
+<video class="scan-video" id="scan-video" autoplay playsinline></video>
+<div class="scan-frame"></div>
+<button class="scan-cancel" onclick="cancelScan()">Cancelar</button>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+<div class="nav-item active" onclick="navigate('dashboard')"><span class="nav-icon">🏠</span><span>Inicio</span></div>
+<div class="nav-item" onclick="navigate('refuelings')"><span class="nav-icon">⛽</span><span>Repostajes</span></div>
+<div class="nav-item" onclick="navigate('maintenance')"><span class="nav-icon">🔧</span><span>Mantto</span></div>
+<div class="nav-item" onclick="navigate('expenses')"><span class="nav-icon">💰</span><span>Gastos</span></div>
+<div class="nav-item" onclick="navigate('settings')"><span class="nav-icon">⚙️</span><span>Ajustes</span></div>
+</div>
+</div>
+
+<script>
+const STORAGE_KEYS={config:'mototrack_config',refuelings:'mototrack_refuelings',maintenances:'mototrack_maintenances',repairs:'mototrack_repairs',expenses:'mototrack_expenses',currentKm:'mototrack_current_km',tripPartial:'mototrack_trip_partial',photos:'mototrack_photos'};
+const DEFAULT_CONFIG={tankCapacity:14,reserveAlert:2,oilIntervalDays:75,oilIntervalKm:2000,manualConsumption:null};
+function getConfig(){const r=localStorage.getItem(STORAGE_KEYS.config);return r?{...DEFAULT_CONFIG,...JSON.parse(r)}:{...DEFAULT_CONFIG}}
+function saveConfigObj(c){localStorage.setItem(STORAGE_KEYS.config,JSON.stringify(c))}
+function getRefuelings(){const r=localStorage.getItem(STORAGE_KEYS.refuelings);return r?JSON.parse(r):[]}
+function saveRefuelings(l){localStorage.setItem(STORAGE_KEYS.refuelings,JSON.stringify(l))}
+function getMaintenances(){const r=localStorage.getItem(STORAGE_KEYS.maintenances);return r?JSON.parse(r):[]}
+function saveMaintenances(l){localStorage.setItem(STORAGE_KEYS.maintenances,JSON.stringify(l))}
+function getRepairs(){const r=localStorage.getItem(STORAGE_KEYS.repairs);return r?JSON.parse(r):[]}
+function saveRepairs(l){localStorage.setItem(STORAGE_KEYS.repairs,JSON.stringify(l))}
+function getExpenses(){const r=localStorage.getItem(STORAGE_KEYS.expenses);return r?JSON.parse(r):[]}
+function saveExpenses(l){localStorage.setItem(STORAGE_KEYS.expenses,JSON.stringify(l))}
+function getCurrentKm(){const r=localStorage.getItem(STORAGE_KEYS.currentKm);if(r)return parseFloat(r);const refs=getRefuelings();return refs.length>0?refs[refs.length-1].km:62430}
+function setCurrentKm(k){localStorage.setItem(STORAGE_KEYS.currentKm,String(k))}
+function getTripPartial(){const r=localStorage.getItem(STORAGE_KEYS.tripPartial);return r?JSON.parse(r):null}
+function saveTripPartial(t){localStorage.setItem(STORAGE_KEYS.tripPartial,JSON.stringify(t))}
+function getPhotos(){const r=localStorage.getItem(STORAGE_KEYS.photos);return r?JSON.parse(r):{}}
+function savePhotos(p){localStorage.setItem(STORAGE_KEYS.photos,JSON.stringify(p))}
+
+function calculateConsumption(){const refs=getRefuelings().sort((a,b)=>a.km-b.km);const cfg=getConfig();if(cfg.manualConsumption)return parseFloat(cfg.manualConsumption);if(refs.length<2)return 35;const c=[];for(let i=1;i<refs.length;i++){const p=refs[i-1],cu=refs[i];if(p.fullTank&&p.liters>0){const d=cu.km-p.km;if(d>0)c.push(d/p.liters)}}if(c.length===0)return 35;return c.reduce((a,b)=>a+b,0)/c.length}
+
+function getFuelStatus(){const refs=getRefuelings().sort((a,b)=>a.km-b.km);const cfg=getConfig();const consumption=calculateConsumption();const currentKm=getCurrentKm();if(refs.length===0)return{remaining:cfg.tankCapacity,autonomy:cfg.tankCapacity*consumption,pct:100,consumption,kmSince:0,lastDate:null};const last=refs[refs.length-1];const kmSince=Math.max(0,currentKm-last.km);const litersConsumed=kmSince/consumption;const remaining=Math.max(0,last.liters-litersConsumed);const pct=Math.min(100,Math.max(0,(remaining/cfg.tankCapacity)*100));const autonomy=remaining*consumption;return{remaining,autonomy,pct,consumption,kmSince,lastDate:last.date}}
+
+function getOilStatus(){const mains=getMaintenances().filter(m=>m.type==='oil').sort((a,b)=>new Date(a.date)-new Date(b.date));const cfg=getConfig();const currentKm=getCurrentKm();if(mains.length===0)return null;const last=mains[mains.length-1];const nextDate=new Date(last.date);nextDate.setDate(nextDate.getDate()+(last.intervalDays||cfg.oilIntervalDays));const nextKm=last.km+(last.intervalKm||cfg.oilIntervalKm);const now=new Date();const daysLeft=Math.ceil((nextDate-now)/(1000*60*60*24));const kmLeft=nextKm-currentKm;return{daysLeft,kmLeft,nextDate,nextKm,last,brand:last.brand,viscosity:last.viscosity}}
+
+function renderDashboard(){const fuel=getFuelStatus();const cfg=getConfig();const oil=getOilStatus();document.getElementById('fuel-gauge').style.setProperty('--pct',fuel.pct);document.getElementById('fuel-liters').textContent=fuel.remaining.toFixed(1);document.getElementById('fuel-autonomy').textContent=Math.floor(fuel.autonomy);document.getElementById('fuel-consumption').textContent=fuel.consumption.toFixed(1);document.getElementById('fuel-km-since').textContent=Math.floor(fuel.kmSince);document.getElementById('fuel-pct').textContent=Math.floor(fuel.pct)+'%';document.getElementById('fuel-last-date').textContent=fuel.lastDate?'Ultimo registro: '+formatDate(fuel.lastDate):'Sin repostajes registrados';const alerts=document.getElementById('dash-alerts');alerts.innerHTML='';if(fuel.remaining<=cfg.reserveAlert&&fuel.remaining>0){alerts.innerHTML+='<div class="alert alert-danger">⚠️ RESERVA: Aproximadamente '+fuel.remaining.toFixed(1)+' litros restantes. ¡Reposta pronto!</div>'}else if(fuel.remaining<=cfg.reserveAlert*1.5){alerts.innerHTML+='<div class="alert alert-warning">⛽ Gasolina baja. Considera repostar.</div>'}if(fuel.remaining<=0){alerts.innerHTML+='<div class="alert alert-danger">🚨 Sin estimacion de gasolina. Registra un repostaje.</div>'}const oilCard=document.getElementById('oil-card');if(!oil){oilCard.style.display='none'}else{oilCard.style.display='block';const daysColor=oil.daysLeft<=7?'var(--danger)':(oil.daysLeft<=15?'var(--warning)':'var(--success)');const kmColor=oil.kmLeft<=300?'var(--danger)':(oil.kmLeft<=600?'var(--warning)':'var(--success)');document.getElementById('oil-days').textContent=oil.daysLeft;document.getElementById('oil-days').style.color=daysColor;document.getElementById('oil-km').textContent=oil.kmLeft;document.getElementById('oil-km').style.color=kmColor;document.getElementById('oil-detail').innerHTML='Ultimo: <strong>'+oil.brand+' '+oil.viscosity+'</strong> el '+formatDate(oil.last.date)+' a los '+oil.last.km+' km';if(oil.daysLeft<=7||oil.kmLeft<=300){alerts.innerHTML+='<div class="alert alert-warning">🔧 Cambio de aceite proximo: '+(oil.daysLeft<=0?'¡Vencido por tiempo!':oil.daysLeft+' dias / ')+(oil.kmLeft<=0?'¡Vencido por km!':oil.kmLeft+' km')+'</div>'}}const tp=getTripPartial();if(tp){document.getElementById('trip-partial-active').style.display='block';document.getElementById('trip-partial-inactive').style.display='none';document.getElementById('tp-name').textContent=tp.name||'Viaje actual';document.getElementById('tp-start-km').textContent=tp.startKm;const currentKm=getCurrentKm();const diff=Math.max(0,currentKm-tp.startKm);document.getElementById('tp-current-km').textContent=diff}else{document.getElementById('trip-partial-active').style.display='none';document.getElementById('trip-partial-inactive').style.display='block'}}
+
+function renderRefuelings(){const refs=getRefuelings().sort((a,b)=>b.km-a.km);const list=document.getElementById('refuelings-list');const empty=document.getElementById('refuelings-empty');const photos=getPhotos();if(refs.length===0){list.innerHTML='';empty.style.display='block';document.getElementById('price-chart').innerHTML='<div class="empty" style="padding:20px">Sin datos</div>';return}empty.style.display='none';let html='';refs.forEach((r,idx)=>{const total=(r.liters*r.pricePerLiter).toFixed(0);const consumption=idx<refs.length-1?((refs[idx+1].km-r.km)/r.liters).toFixed(1)+' km/L':'N/A';const photo=photos['ref_'+r.id]?'<img src="'+photos['ref_'+r.id]+'" class="photo-thumb" style="margin-left:10px">':'';html+='<div class="list-item"><div class="list-item-info"><div class="list-item-title">'+formatDate(r.date)+' • '+r.km+' km</div><div class="list-item-sub">'+r.liters+'L @ $'+r.pricePerLiter+'/L'+(r.fullTank?' • Tanque lleno':'')+'</div></div><div style="display:flex;align-items:center">'+photo+'<div class="list-item-right" style="margin-left:10px"><div class="list-item-value">$'+total+'</div><div class="list-item-sub">'+consumption+'</div></div></div></div>'});list.innerHTML=html;const now=new Date();const thisMonth=now.getMonth();const thisYear=now.getFullYear();let monthSpent=0,monthLiters=0,totalRefuels=refs.length,avgPriceSum=0;refs.forEach(r=>{const d=new Date(r.date);avgPriceSum+=r.pricePerLiter;if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear){monthSpent+=r.liters*r.pricePerLiter;monthLiters+=r.liters}});document.getElementById('stat-total-spent').textContent='$'+Math.floor(monthSpent).toLocaleString();document.getElementById('stat-avg-price').textContent='$'+(avgPriceSum/refs.length).toFixed(0);document.getElementById('stat-month-liters').textContent=monthLiters.toFixed(1);document.getElementById('stat-total-refuels').textContent=totalRefuels;const chartRefs=refs.slice(0,6).reverse();const maxPrice=Math.max(...chartRefs.map(r=>r.pricePerLiter));let chartHtml='';chartRefs.forEach(r=>{const h=Math.max(10,(r.pricePerLiter/maxPrice)*100);chartHtml+='<div class="bar-wrapper"><div class="bar" style="height:'+h+'px"></div><div class="bar-label">$'+r.pricePerLiter+'<br><small>'+formatDateShort(r.date)+'</small></div></div>'});document.getElementById('price-chart').innerHTML=chartHtml}
+
+function renderMaintenance(){const mains=getMaintenances().filter(m=>m.type==='oil').sort((a,b)=>new Date(b.date)-new Date(a.date));const list=document.getElementById('maintenance-list');const empty=document.getElementById('maintenance-empty');if(mains.length===0){list.innerHTML='';empty.style.display='block'}else{empty.style.display='none';let html='';mains.forEach(m=>{html+='<div class="list-item"><div class="list-item-info"><div class="list-item-title">'+m.brand+' '+m.viscosity+'</div><div class="list-item-sub">'+formatDate(m.date)+' • '+m.km+' km'+(m.notes?' • '+m.notes:'')+'</div></div><div class="list-item-right"><div class="list-item-value">'+(m.intervalKm||2000)+' km</div><div class="list-item-sub">cada '+(m.intervalDays||75)+' dias</div></div></div>'});list.innerHTML=html}const repairs=getRepairs().sort((a,b)=>new Date(b.date)-new Date(a.date));const rlist=document.getElementById('repairs-list');const rempty=document.getElementById('repairs-empty');if(repairs.length===0){rlist.innerHTML='';rempty.style.display='block'}else{rempty.style.display='none';let html='';repairs.forEach(r=>{const severity=r.severity==='grave'?'🔴':(r.severity==='media'?'🟡':'🟢');html+='<div class="list-item"><div class="list-item-info"><div class="list-item-title">'+severity+' '+r.description.substring(0,40)+(r.description.length>40?'...':'')+'</div><div class="list-item-sub">'+formatDate(r.date)+' • '+r.km+' km'+(r.mechanic?' • '+r.mechanic:'')+'</div></div><div class="list-item-right"><div class="list-item-value">$'+(r.cost||0)+'</div><div class="list-item-sub">'+(r.status==='fixed'?'✅ Reparado':'⏳ Pendiente')+'</div></div></div>'});rlist.innerHTML=html}}
+
+function renderExpenses(){const expenses=getExpenses().sort((a,b)=>new Date(b.date)-new Date(a.date));const list=document.getElementById('expenses-list');const empty=document.getElementById('expenses-empty');const now=new Date();const thisMonth=now.getMonth();const thisYear=now.getFullYear();let totals={fuel:0,soat:0,insurance:0,parts:0,repair:0,other:0};let totalAll=0,totalFuel=0,totalKm=0;const refs=getRefuelings();if(refs.length>=2){const sorted=refs.sort((a,b)=>a.km-b.km);totalKm=sorted[sorted.length-1].km-sorted[0].km}expenses.forEach(e=>{const d=new Date(e.date);if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear){totals[e.category]=(totals[e.category]||0)+e.amount;totalAll+=e.amount;if(e.category==='fuel')totalFuel+=e.amount}});refs.forEach(r=>{const d=new Date(r.date);if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear){totals.fuel+=r.liters*r.pricePerLiter;totalAll+=r.liters*r.pricePerLiter;totalFuel+=r.liters*r.pricePerLiter}});document.getElementById('exp-month-total').textContent='$'+Math.floor(totalAll).toLocaleString();document.getElementById('exp-fuel').textContent='$'+Math.floor(totals.fuel).toLocaleString();document.getElementById('exp-soat').textContent='$'+Math.floor(totals.soat).toLocaleString();document.getElementById('exp-insurance').textContent='$'+Math.floor(totals.insurance).toLocaleString();document.getElementById('exp-parts').textContent='$'+Math.floor(totals.parts).toLocaleString();document.getElementById('exp-repair').textContent='$'+Math.floor(totals.repair).toLocaleString();document.getElementById('exp-other').textContent='$'+Math.floor(totals.other).toLocaleString();const costPerKm=totalKm>0?(totalAll/totalKm).toFixed(2):'0';const fuelPerKm=totalKm>0?(totalFuel/totalKm).toFixed(2):'0';document.getElementById('cost-per-km').textContent='$'+costPerKm;document.getElementById('cost-fuel-per-km').textContent='$'+fuelPerKm;if(expenses.length===0){list.innerHTML='';empty.style.display='block'}else{empty.style.display='none';let html='';expenses.forEach(e=>{const tagClass='tag-expense-'+e.category;const catName={fuel:'Combustible',soat:'SOAT/Docs',insurance:'Seguro',parts:'Repuestos',repair:'Reparacion',other:'Otro'}[e.category]||e.category;html+='<div class="list-item"><div class="list-item-info"><div class="list-item-title">'+e.description+'<span class="tag '+tagClass+'">'+catName+'</span></div><div class="list-item-sub">'+formatDate(e.date)+' • '+e.km+' km</div></div><div class="list-item-right"><div class="list-item-value">$'+e.amount+'</div></div></div>'});list.innerHTML=html}}
+
+function renderTrip(){const fuel=getFuelStatus();document.getElementById('trip-current-fuel').textContent=fuel.remaining.toFixed(1);document.getElementById('trip-current-autonomy').textContent=Math.floor(fuel.autonomy)}
+function renderSettings(){const cfg=getConfig();document.getElementById('cfg-tank').value=cfg.tankCapacity;document.getElementById('cfg-reserve').value=cfg.reserveAlert;document.getElementById('cfg-oil-days').value=cfg.oilIntervalDays;document.getElementById('cfg-oil-km').value=cfg.oilIntervalKm;document.getElementById('cfg-manual-consumption').value=cfg.manualConsumption||''}
+
+function navigate(section){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById('section-'+section).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));if(event&&event.currentTarget)event.currentTarget.classList.add('active');if(section==='dashboard')renderDashboard();if(section==='refuelings')renderRefuelings();if(section==='maintenance')renderMaintenance();if(section==='expenses')renderExpenses();if(section==='trip')renderTrip();if(section==='settings')renderSettings()}
+
+let capturedPhoto=null;
+function openModal(type){const modal=document.getElementById('modal');const body=document.getElementById('modal-body');const title=document.getElementById('modal-title');modal.classList.add('active');capturedPhoto=null;if(type==='refuel'){title.textContent='Registrar Repostaje';const currentKm=getCurrentKm();body.innerHTML='<div class="form-group"><label>Fecha</label><input type="date" id="ref-date" value="'+today()+'"></div><div class="form-group"><label>Kilometraje del odometro</label><input type="number" id="ref-km" value="'+(currentKm||'')+'" placeholder="Ej: 62500"></div><div class="form-group"><label>Litros cargados</label><input type="number" id="ref-liters" step="0.1" placeholder="Ej: 14"></div><div class="form-group"><label>Precio por litro</label><input type="number" id="ref-price" step="0.01" placeholder="Ej: 0.50"></div><div class="checkbox-row"><input type="checkbox" id="ref-full" checked><label for="ref-full" style="margin:0">Tanque lleno (llenado completo)</label></div><div class="form-group"><button class="btn btn-secondary" onclick="openCamera()" style="margin-bottom:0">📷 Foto del odometro</button><div id="photo-preview"></div></div><button class="btn btn-primary" onclick="saveRefuel()">Guardar Repostaje</button>'}else if(type==='maintenance'){title.textContent='Registrar Cambio de Aceite';const currentKm=getCurrentKm();const cfg=getConfig();body.innerHTML='<div class="form-group"><label>Fecha</label><input type="date" id="mnt-date" value="'+today()+'"></div><div class="form-group"><label>Kilometraje</label><input type="number" id="mnt-km" value="'+(currentKm||'')+'" placeholder="Ej: 62500"></div><div class="form-group"><label>Marca del aceite</label><input type="text" id="mnt-brand" placeholder="Ej: Castrol, Mobil, Valvoline"></div><div class="form-group"><label>Viscosidad</label><select id="mnt-viscosity"><option>20W-50</option><option>10W-40</option><option>15W-40</option><option>10W-30</option><option>Otro</option></select></div><div class="form-group"><label>Proximo cambio en dias</label><input type="number" id="mnt-days" value="'+cfg.oilIntervalDays+'"></div><div class="form-group"><label>Proximo cambio en km</label><input type="number" id="mnt-km-int" value="'+cfg.oilIntervalKm+'"></div><div class="form-group"><label>Notas (opcional)</label><input type="text" id="mnt-notes" placeholder="Ej: Filtro nuevo, ajuste de valvulas"></div><button class="btn btn-primary" onclick="saveMaintenance()">Guardar Mantenimiento</button>'}else if(type==='repair'){title.textContent='Registrar Averia / Reparacion';const currentKm=getCurrentKm();body.innerHTML='<div class="form-group"><label>Fecha</label><input type="date" id="rep-date" value="'+today()+'"></div><div class="form-group"><label>Kilometraje</label><input type="number" id="rep-km" value="'+(currentKm||'')+'" placeholder="Ej: 62500"></div><div class="form-group"><label>Descripcion del problema</label><textarea id="rep-desc" placeholder="Ej: La moto pierde aceite por el reten del ciguenal, ruido en la cadena, etc."></textarea></div><div class="form-group"><label>Gravedad</label><select id="rep-severity"><option value="leve">🟢 Leve - No impide circular</option><option value="media">🟡 Media - Requiere atencion pronto</option><option value="grave">🔴 Grave - No circular hasta reparar</option></select></div><div class="form-group"><label>¿Ya fue reparado?</label><select id="rep-status"><option value="pending">⏳ Pendiente</option><option value="fixed">✅ Reparado</option></select></div><div class="form-group"><label>Costo de reparacion (opcional)</label><input type="number" id="rep-cost" placeholder="Ej: 45"></div><div class="form-group"><label>Mecanico / Taller</label><input type="text" id="rep-mechanic" placeholder="Ej: Taller El Motor, Juan Perez"></div><div class="form-group"><label>Notas adicionales</label><textarea id="rep-notes" placeholder="Piezas cambiadas, garantia, etc."></textarea></div><button class="btn btn-primary" onclick="saveRepair()">Guardar Averia</button>'}else if(type==='expense'){title.textContent='Registrar Gasto';const currentKm=getCurrentKm();body.innerHTML='<div class="form-group"><label>Fecha</label><input type="date" id="exp-date" value="'+today()+'"></div><div class="form-group"><label>Kilometraje</label><input type="number" id="exp-km" value="'+(currentKm||'')+'" placeholder="Ej: 62500"></div><div class="form-group"><label>Categoria</label><select id="exp-category"><option value="soat">📋 SOAT / Documentos</option><option value="insurance">🛡️ Seguro</option><option value="parts">🔩 Repuestos</option><option value="repair">🛠️ Reparacion / Mano de obra</option><option value="other">📦 Otro</option></select></div><div class="form-group"><label>Descripcion</label><input type="text" id="exp-desc" placeholder="Ej: SOAT 2025, Bujia NGK, Casco nuevo"></div><div class="form-group"><label>Monto</label><input type="number" id="exp-amount" step="0.01" placeholder="Ej: 120"></div><div class="form-group"><label>Notas (opcional)</label><input type="text" id="exp-notes" placeholder="Vencimiento, garantia, etc."></div><button class="btn btn-primary" onclick="saveExpense()">Guardar Gasto</button>'}}
+
+function closeModal(){document.getElementById('modal').classList.remove('active');capturedPhoto=null}
+
+function openCamera(){const overlay=document.getElementById('camera-overlay');overlay.classList.add('active');const video=document.getElementById('camera-video');navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{video.srcObject=stream;video.play()}).catch(err=>{alert('No se pudo acceder a la camara: '+err.message);cancelCamera()})}
+
+function takePhoto(){const video=document.getElementById('camera-video');const canvas=document.createElement('canvas');canvas.width=video.videoWidth||1280;canvas.height=video.videoHeight||720;const ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height);capturedPhoto=canvas.toDataURL('image/jpeg',0.7);cancelCamera();const preview=document.getElementById('photo-preview');if(preview)preview.innerHTML='<img src="'+capturedPhoto+'" class="photo-preview">'}
+
+function cancelCamera(){const video=document.getElementById('camera-video');if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null}document.getElementById('camera-overlay').classList.remove('active')}
+
+function saveRefuel(){const date=document.getElementById('ref-date').value;const km=parseFloat(document.getElementById('ref-km').value);const liters=parseFloat(document.getElementById('ref-liters').value);const price=parseFloat(document.getElementById('ref-price').value);const full=document.getElementById('ref-full').checked;if(!date||!km||!liters||!price){alert('Completa todos los campos');return}if(km<getCurrentKm()&&getRefuelings().length>0){if(!confirm('El kilometraje es menor al anterior. ¿Esta correcto?'))return}const id=Date.now();const refs=getRefuelings();refs.push({id,date,km,liters,pricePerLiter:price,fullTank:full});refs.sort((a,b)=>a.km-b.km);saveRefuelings(refs);if(capturedPhoto){const photos=getPhotos();photos['ref_'+id]=capturedPhoto;savePhotos(photos)}setCurrentKm(km);closeModal();renderDashboard();renderRefuelings()}
+
+function saveMaintenance(){const date=document.getElementById('mnt-date').value;const km=parseFloat(document.getElementById('mnt-km').value);const brand=document.getElementById('mnt-brand').value;const viscosity=document.getElementById('mnt-viscosity').value;const days=parseInt(document.getElementById('mnt-days').value);const kmInt=parseInt(document.getElementById('mnt-km-int').value);const notes=document.getElementById('mnt-notes').value;if(!date||!km||!brand||!viscosity){alert('Completa los campos obligatorios');return}const mains=getMaintenances();mains.push({id:Date.now(),type:'oil',date,km,brand,viscosity,intervalDays:days,intervalKm:kmInt,notes});saveMaintenances(mains);setCurrentKm(km);closeModal();renderDashboard();renderMaintenance()}
+
+function saveRepair(){const date=document.getElementById('rep-date').value;const km=parseFloat(document.getElementById('rep-km').value);const desc=document.getElementById('rep-desc').value;const severity=document.getElementById('rep-severity').value;const status=document.getElementById('rep-status').value;const cost=parseFloat(document.getElementById('rep-cost').value)||0;const mechanic=document.getElementById('rep-mechanic').value;const notes=document.getElementById('rep-notes').value;if(!date||!km||!desc){alert('Completa los campos obligatorios');return}const repairs=getRepairs();repairs.push({id:Date.now(),date,km,description:desc,severity,status,cost,mechanic,notes});saveRepairs(repairs);setCurrentKm(km);closeModal();renderMaintenance()}
+
+function saveExpense(){const date=document.getElementById('exp-date').value;const km=parseFloat(document.getElementById('exp-km').value);const category=document.getElementById('exp-category').value;const desc=document.getElementById('exp-desc').value;const amount=parseFloat(document.getElementById('exp-amount').value);const notes=document.getElementById('exp-notes').value;if(!date||!km||!desc||!amount){alert('Completa todos los campos');return}const expenses=getExpenses();expenses.push({id:Date.now(),date,km,category,description:desc,amount,notes});saveExpenses(expenses);setCurrentKm(km);closeModal();renderExpenses()}
+
+function saveConfig(){const cfg={tankCapacity:parseFloat(document.getElementById('cfg-tank').value)||14,reserveAlert:parseFloat(document.getElementById('cfg-reserve').value)||2,oilIntervalDays:parseInt(document.getElementById('cfg-oil-days').value)||75,oilIntervalKm:parseInt(document.getElementById('cfg-oil-km').value)||2000,manualConsumption:document.getElementById('cfg-manual-consumption').value?parseFloat(document.getElementById('cfg-manual-consumption').value):null};saveConfigObj(cfg);alert('Configuracion guardada');renderDashboard()}
+
+function calculateTrip(){const km=parseFloat(document.getElementById('trip-km').value);if(!km||km<=0){alert('Ingresa los kilometros');return}const fuel=getFuelStatus();const needed=km/fuel.consumption;const result=document.getElementById('trip-result');if(needed<=fuel.remaining){const leftover=fuel.remaining-needed;result.innerHTML='<div class="trip-status trip-ok">✅ LLEGAS BIEN</div><div class="card"><p>Litros necesarios: <strong>'+needed.toFixed(1)+'L</strong></p><p>Te sobrarian aprox: <strong>'+leftover.toFixed(1)+'L</strong></p><p style="font-size:.85rem;color:var(--text-secondary)">Conduccion normal, sin excesos.</p></div>'}else{const missing=needed-fuel.remaining;const stopKm=fuel.autonomy;result.innerHTML='<div class="trip-status trip-bad">❌ NO LLEGAS</div><div class="card"><p>Necesitas: <strong>'+needed.toFixed(1)+'L</strong></p><p>Te faltan: <strong>'+missing.toFixed(1)+'L</strong></p><p>Autonomia actual: <strong>'+Math.floor(fuel.autonomy)+' km</strong></p><p style="color:var(--danger);font-weight:600">Reposta antes de los '+Math.floor(stopKm)+' km</p></div>'}}
+
+function startTripPartial(){const name=prompt('Nombre del trip (ej: Viaje a Merida, Ruta diaria):')||'Viaje';const startKm=getCurrentKm();saveTripPartial({name,startKm,started:today()});renderDashboard()}
+function updateTripPartial(){const tp=getTripPartial();if(!tp)return;const currentKm=prompt('Kilometraje actual del odometro:',getCurrentKm());if(currentKm){setCurrentKm(parseFloat(currentKm));renderDashboard()}}
+function resetTripPartial(){if(confirm('¿Finalizar trip parcial?')){saveTripPartial(null);renderDashboard()}}
+
+function exportData(){const data={config:getConfig(),refuelings:getRefuelings(),maintenances:getMaintenances(),repairs:getRepairs(),expenses:getExpenses(),currentKm:getCurrentKm(),photos:getPhotos(),exportDate:new Date().toISOString()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mototrack_backup_'+today()+'.json';a.click();URL.revokeObjectURL(url)}
+
+function importData(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(data.config)saveConfigObj(data.config);if(data.refuelings)saveRefuelings(data.refuelings);if(data.maintenances)saveMaintenances(data.maintenances);if(data.repairs)saveRepairs(data.repairs);if(data.expenses)saveExpenses(data.expenses);if(data.currentKm)setCurrentKm(data.currentKm);if(data.photos)savePhotos(data.photos);alert('Datos importados correctamente');renderDashboard();renderRefuelings();renderMaintenance();renderExpenses()}catch(err){alert('Error al importar: archivo invalido')}};reader.readAsText(file);input.value=''}
+
+function resetAll(){if(confirm('¿Borrar TODOS los datos? Esta accion no se puede deshacer.')){localStorage.removeItem(STORAGE_KEYS.config);localStorage.removeItem(STORAGE_KEYS.refuelings);localStorage.removeItem(STORAGE_KEYS.maintenances);localStorage.removeItem(STORAGE_KEYS.repairs);localStorage.removeItem(STORAGE_KEYS.expenses);localStorage.removeItem(STORAGE_KEYS.currentKm);localStorage.removeItem(STORAGE_KEYS.tripPartial);localStorage.removeItem(STORAGE_KEYS.photos);alert('Datos borrados');location.reload()}}
+
+function openQRModal(){document.getElementById('qr-modal').classList.add('active');document.getElementById('qr-canvas').innerHTML='';document.getElementById('qr-text').textContent='Genera un QR para transferir tus datos a otro celular'}
+function closeQRModal(){document.getElementById('qr-modal').classList.remove('active')}
+
+function generateQR(){const data={config:getConfig(),refuelings:getRefuelings(),maintenances:getMaintenances(),repairs:getRepairs(),expenses:getExpenses(),currentKm:getCurrentKm(),photos:getPhotos()};const json=JSON.stringify(data);const chunks=[];const chunkSize=2000;for(let i=0;i<json.length;i+=chunkSize){chunks.push(json.substring(i,i+chunkSize))}if(chunks.length>1){alert('Tus datos son muy grandes para un solo QR. Se generaran '+chunks.length+' QR. Escanea todos en orden.');let current=0;function showNext(){if(current>=chunks.length){document.getElementById('qr-text').textContent='¡Listo! Todos los QR fueron escaneados.';return}document.getElementById('qr-text').textContent='QR '+(current+1)+' de '+chunks.length+' - Toca el QR para siguiente';const container=document.getElementById('qr-canvas');container.innerHTML='';QRCode.toCanvas(document.createElement('canvas'),chunks[current],{width:250,margin:2},function(err,canvas){if(err){alert('Error generando QR');return}canvas.style.cursor='pointer';canvas.onclick=()=>{current++;showNext()};container.appendChild(canvas)})}showNext()}else{document.getElementById('qr-text').textContent='Escanea este QR con otro celular';const container=document.getElementById('qr-canvas');container.innerHTML='';QRCode.toCanvas(document.createElement('canvas'),json,{width:280,margin:2},function(err,canvas){if(err){alert('Error generando QR');return}container.appendChild(canvas)})}}
+
+let scanStream=null;
+function scanQR(){closeQRModal();const overlay=document.getElementById('scan-overlay');overlay.classList.add('active');const video=document.getElementById('scan-video');navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{scanStream=stream;video.srcObject=stream;video.play();scanLoop()}).catch(err=>{alert('No se pudo acceder a la camara: '+err.message);cancelScan()})}
+
+function scanLoop(){const video=document.getElementById('scan-video');if(!video||!scanStream||video.paused||video.ended)return;const canvas=document.createElement('canvas');canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;const ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height);const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);const code=jsQR(imageData.data,imageData.width,imageData.height);if(code){try{const data=JSON.parse(code.data);if(data.config)saveConfigObj(data.config);if(data.refuelings)saveRefuelings(data.refuelings);if(data.maintenances)saveMaintenances(data.maintenances);if(data.repairs)saveRepairs(data.repairs);if(data.expenses)saveExpenses(data.expenses);if(data.currentKm)setCurrentKm(data.currentKm);if(data.photos)savePhotos(data.photos);cancelScan();alert('Datos sincronizados correctamente');renderDashboard();renderRefuelings();renderMaintenance();renderExpenses();return}catch(e){}}requestAnimationFrame(scanLoop)}
+
+function cancelScan(){const video=document.getElementById('scan-video');if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}if(video.srcObject){video.srcObject=null}document.getElementById('scan-overlay').classList.remove('active')}
+
+function today(){const d=new Date();return d.toISOString().split('T')[0]}
+function formatDate(ds){const d=new Date(ds+'T00:00:00');return d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}
+function formatDateShort(ds){const d=new Date(ds+'T00:00:00');return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
+
+renderDashboard();
+</script>
+</body>
+</html>

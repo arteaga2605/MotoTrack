@@ -1,0 +1,27 @@
+{
+  "llenados": [
+    {
+      "fecha": "2026-06-18",
+      "odo": 6243,
+      "litros": 14,
+      "tanqueLleno": true,
+      "id": 1
+    }
+  ],
+  "aceite": [
+    {
+      "fecha": "2026-04-20",
+      "odo": 500,
+      "tipo_aceite": "Mineral 20w50",
+      "id": 1
+    }
+  ],
+  "config": {
+    "capacidadTanque": 14,
+    "consumoKmPorLitro": 40,
+    "intervaloDias": 75,
+    "intervaloKm": 1500,
+    "odoActual": 6286.5
+  },
+  "exportDate": "2026-06-19T18:29:23.433Z"
+}

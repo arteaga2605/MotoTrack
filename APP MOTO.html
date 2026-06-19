@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Gasolina Moto</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface2: #2a2a2a;
+            --text: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent: #ffb300;
+            --danger: #cf6679;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --border: #333;
+            --radius: 12px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text);
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; padding-bottom: 80px;
+        }
+        .app { width: 100%; max-width: 500px; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--surface); display: flex; justify-content: space-around;
+            align-items: center; padding: 8px 0; border-top: 1px solid var(--border); z-index: 10;
+        }
+        .nav-btn {
+            background: transparent; border: none; color: var(--text-secondary);
+            font-size: 0.8rem; display: flex; flex-direction: column; align-items: center;
+            gap: 4px; padding: 8px 16px; border-radius: var(--radius); cursor: pointer;
+        }
+        .nav-btn.active { color: var(--accent); background: rgba(255,179,0,0.1); }
+        .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
+        .panel { display: none; }
+        .panel.active { display: flex; flex-direction: column; gap: 16px; }
+        .card {
+            background: var(--surface); border-radius: var(--radius); padding: 16px;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+        }
+        .card h2 { color: var(--accent); margin-bottom: 12px; font-weight: 600; }
+        .card h3 { color: var(--accent); margin: 16px 0 8px; font-weight: 600; }
+        .fuel-gauge {
+            width: 100%; background: var(--surface2); border-radius: 20px;
+            height: 24px; overflow: hidden; margin: 12px 0;
+        }
+        .fuel-level {
+            height: 100%; background: var(--success); width: 0%;
+            transition: width 0.5s ease, background 0.3s;
+        }
+        .fuel-level.warning { background: var(--warning); }
+        .fuel-level.danger { background: var(--danger); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-item {
+            background: var(--surface2); padding: 12px; border-radius: var(--radius); text-align: center;
+        }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
+        .stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+        label { font-size: 0.85rem; color: var(--text-secondary); }
+        input, select {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 12px; color: var(--text);
+            font-size: 1rem; width: 100%;
+        }
+        input:focus, select:focus { border-color: var(--accent); outline: none; }
+        .checkbox-group { flex-direction: row; align-items: center; gap: 8px; }
+        .checkbox-group input { width: auto; }
+        .btn {
+            background: var(--accent); color: #000; border: none; border-radius: var(--radius);
+            padding: 12px 24px; font-weight: bold; font-size: 1rem; cursor: pointer;
+            transition: background 0.2s; width: 100%;
+        }
+        .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+        .btn-small { padding: 8px 16px; font-size: 0.9rem; }
+        .record-item {
+            background: var(--surface2); padding: 12px; border-radius: var(--radius);
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; border: 1px solid var(--border);
+        }
+        .record-info { flex: 1; min-width: 150px; }
+        .record-actions { display: flex; gap: 8px; }
+        .icon-btn { background: transparent; border: none; color: var(--text); padding: 4px; cursor: pointer; border-radius: 6px; }
+        .icon-btn:hover { background: var(--surface); }
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--surface); color: var(--text); padding: 12px 24px;
+            border-radius: var(--radius); box-shadow: var(--shadow); z-index: 20; display: none;
+        }
+        .warning-note {
+            font-size: 0.75rem; color: var(--warning); margin-top: 4px;
+        }
+        .aceite-alert {
+            background: var(--surface2);
+            border-left: 4px solid var(--warning);
+            padding: 8px 12px;
+            margin-top: 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .aceite-alert strong { color: var(--warning); }
+        .autonomia { margin-top: 4px; }
+    </style>
+</head>
+<body>
+<div class="app" id="app">
+    <!-- Panel Inicio -->
+    <div class="panel active" id="panel-inicio">
+        <div class="card">
+            <h2>🛵 Kilometraje actual</h2>
+            <div class="form-group">
+                <label for="odo-actual">¿Cuántos km marca hoy?</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="odo-actual" step="0.1" placeholder="Ej: 6286.5">
+                    <button class="btn" style="width: auto;" onclick="actualizarKilometraje()">Actualizar</button>
+                </div>
+            </div>
+            <p class="warning-note">⚠️ El último dígito suele ser un decimal. Ej: 062865 = 6286.5 km.</p>
+        </div>
+
+        <div class="card">
+            <h2>⛽ Gasolina restante</h2>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span id="restante-texto" style="font-size: 1.8rem; font-weight: bold;">--</span>
+                <span id="restante-porcentaje" style="color: var(--text-secondary);"></span>
+            </div>
+            <div class="fuel-gauge">
+                <div class="fuel-level" id="barra-combustible" style="width: 0%;"></div>
+            </div>
+            <p id="mensaje-alerta" style="font-weight: bold; min-height: 1.2em;"></p>
+            <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div><span style="color: var(--text-secondary);">Recorrido desde lleno:</span> <strong id="distancia-recorrida">--</strong></div>
+                <div><span style="color: var(--text-secondary);">Consumo usado:</span> <strong id="consumo-usado">--</strong></div>
+            </div>
+            <div class="autonomia">
+                <span style="color: var(--text-secondary);">Autonomía est.:</span> <strong id="autonomia-km">--</strong>
+            </div>
+        </div>
+
+        <div class="card" id="aceite-card">
+            <h2>🛢️ Cambio de aceite</h2>
+            <div id="aceite-info">--</div>
+            <div id="aceite-alerta" class="aceite-alert" style="display: none;"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="odo-mostrado">--</div>
+                <div class="stat-label">Kilometraje actual</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="ultimo-llenado">--</div>
+                <div class="stat-label">Último llenado</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Historial -->
+    <div class="panel" id="panel-historial">
+        <div class="card" id="form-card" style="display: none;">
+            <h2 id="form-title">Nuevo llenado</h2>
+            <form id="form-llenado">
+                <input type="hidden" id="edit-id" value="">
+                <div class="form-group">
+                    <label for="fecha">Fecha</label>
+                    <input type="date" id="fecha" required>
+                </div>
+                <div class="form-group">
+                    <label for="odo-llenado">Kilometraje al llenar</label>
+                    <input type="number" id="odo-llenado" step="0.1" placeholder="Ej: 6243.0" required>
+                    <p class="warning-note">⚠️ Incluye decimal si el odómetro lo muestra. 062430 = 6243.0 km.</p>
+                </div>
+                <div class="form-group">
+                    <label for="litros">Litros cargados</label>
+                    <input type="number" id="litros" step="0.01" placeholder="14">
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="tanque-lleno" checked>
+                    <label for="tanque-lleno"><strong>Tanque lleno</strong></label>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn">💾 Guardar</button>
+                    <button type="button" class="btn btn-outline" onclick="cancelarFormulario()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card" id="form-aceite-card" style="display: none;">
+            <h2 id="form-aceite-title">Nuevo cambio de aceite</h2>
+            <form id="form-aceite">
+                <input type="hidden" id="aceite-edit-id" value="">
+                <div class="form-group">
+                    <label for="aceite-fecha">Fecha</label>
+                    <input type="date" id="aceite-fecha" required>
+                </div>
+                <div class="form-group">
+                    <label for="aceite-odo">Kilometraje al cambiar</label>
+                    <input type="number" id="aceite-odo" step="0.1" placeholder="Ej: 6286.5" required>
+                </div>
+                <div class="form-group">
+                    <label for="tipo-aceite">Tipo de aceite</label>
+                    <input type="text" id="tipo-aceite" placeholder="Mineral 20W50">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn">💾 Guardar</button>
+                    <button type="button" class="btn btn-outline" onclick="cancelarFormularioAceite()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>⛽ Llenados de gasolina</h3>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+                <button class="btn btn-small" style="width: auto;" onclick="mostrarFormularioNuevo()">➕ Nuevo</button>
+            </div>
+            <div id="lista-llenados"></div>
+        </div>
+        <div class="card">
+            <h3>🛢️ Cambios de aceite</h3>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+                <button class="btn btn-small" style="width: auto;" onclick="mostrarFormularioAceiteNuevo()">➕ Nuevo</button>
+            </div>
+            <div id="lista-aceite"></div>
+        </div>
+    </div>
+
+    <!-- Panel Ajustes -->
+    <div class="panel" id="panel-ajustes">
+        <div class="card">
+            <h2>⚙️ Ajustes generales</h2>
+            <div class="form-group">
+                <label for="capacidad-tanque">Capacidad del tanque (litros)</label>
+                <input type="number" id="capacidad-tanque" step="0.1" min="1" value="14">
+            </div>
+            <div class="form-group">
+                <label for="consumo-kmpl">Consumo (km por litro)</label>
+                <input type="number" id="consumo-kmpl" step="0.1" min="1" value="40">
+                <p style="font-size:0.75rem; color: var(--text-secondary);">Empieza con 40 km/L y ajusta cuando tengas datos reales.</p>
+            </div>
+        </div>
+        <div class="card">
+            <h2>🛢️ Cambio de aceite</h2>
+            <div class="form-group">
+                <label for="intervalo-km">Intervalo de kilometraje (km)</label>
+                <input type="number" id="intervalo-km" step="100" min="500" value="1500">
+            </div>
+            <div class="form-group">
+                <label for="intervalo-dias">Intervalo de días</label>
+                <input type="number" id="intervalo-dias" min="30" value="75">
+                <p style="font-size:0.75rem; color: var(--text-secondary);">Recomendado: 1500 km o 75 días (2.5 meses).</p>
+            </div>
+            <button class="btn" onclick="guardarAjustes()">💾 Guardar ajustes</button>
+        </div>
+        <div class="card">
+            <h2>📂 Datos</h2>
+            <p style="font-size:0.9rem; margin-bottom: 12px;">Exporta o importa todos los registros y configuración.</p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn btn-outline" onclick="exportarDatos()">📤 Exportar todo</button>
+                <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">📥 Importar</button>
+                <input type="file" id="import-file" style="display: none" accept=".json" onchange="importarDatos(event)">
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+</div>
+
+<nav class="bottom-nav">
+    <button class="nav-btn active" data-panel="panel-inicio" onclick="mostrarPanel('panel-inicio')">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h3v8h6v-6h2v6h6v-8h3L13 2z"/></svg>
+        <span>Inicio</span>
+    </button>
+    <button class="nav-btn" data-panel="panel-historial" onclick="mostrarPanel('panel-historial')">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        <span>Historial</span>
+    </button>
+    <button class="nav-btn" data-panel="panel-ajustes" onclick="mostrarPanel('panel-ajustes')">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <span>Ajustes</span>
+    </button>
+</nav>
+
+<script>
+    // Base de datos IndexedDB (misma versión, añadimos stores si no existen)
+    class BD {
+        constructor(nombre = 'GasolinaMotoV4', version = 1) {
+            this.nombre = nombre; this.version = version; this.db = null;
+        }
+        async abrir() {
+            return new Promise((res, rej) => {
+                const req = indexedDB.open(this.nombre, this.version);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('llenados')) {
+                        db.createObjectStore('llenados', { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains('config')) {
+                        db.createObjectStore('config', { keyPath: 'clave' });
+                    }
+                    if (!db.objectStoreNames.contains('aceite')) {
+                        db.createObjectStore('aceite', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                req.onsuccess = (e) => { this.db = e.target.result; res(); };
+                req.onerror = (e) => rej(e.target.error);
+            });
+        }
+        async obtenerConfig() {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('config', 'readonly');
+                const store = tx.objectStore('config');
+                const req = store.getAll();
+                req.onsuccess = () => {
+                    const items = req.result;
+                    const cfg = {};
+                    items.forEach(i => cfg[i.clave] = i.valor);
+                    res(cfg);
+                };
+                req.onerror = (e) => rej(e);
+            });
+        }
+        async guardarConfig(clave, valor) {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('config', 'readwrite');
+                const store = tx.objectStore('config');
+                store.put({ clave, valor });
+                tx.oncomplete = () => res();
+                tx.onerror = (e) => rej(e);
+            });
+        }
+        async obtenerLlenados() {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('llenados', 'readonly');
+                const store = tx.objectStore('llenados');
+                const req = store.getAll();
+                req.onsuccess = () => res(req.result);
+                req.onerror = (e) => rej(e);
+            });
+        }
+        async agregarLlenado(datos) {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('llenados', 'readwrite');
+                const store = tx.objectStore('llenados');
+                const req = store.add(datos);
+                req.onsuccess = () => res(req.result);
+                req.onerror = (e) => rej(e);
+            });
+        }
+        async actualizarLlenado(id, datos) {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('llenados', 'readwrite');
+                const store = tx.objectStore('llenados');
+                const get = store.get(id);
+                get.onsuccess = () => {
+                    const obj = get.result;
+                    if (!obj) return rej('No encontrado');
+                    Object.assign(obj, datos);
+                    store.put(obj);
+                    tx.oncomplete = () => res();
+                };
+                get.onerror = (e) => rej(e);
+            });
+        }
+        async eliminarLlenado(id) {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('llenados', 'readwrite');
+                const store = tx.objectStore('llenados');
+                store.delete(id);
+                tx.oncomplete = () => res();
+                tx.onerror = (e) => rej(e);
+            });
+        }
+        async obtenerCambiosAceite() {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('aceite', 'readonly');
+                const store = tx.objectStore('aceite');
+                const req = store.getAll();
+                req.onsuccess = () => res(req.result);
+                req.onerror = (e) => rej(e);
+            });
+        }
+        async agregarCambioAceite(datos) {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('aceite', 'readwrite');
+                const store = tx.objectStore('aceite');
+                const req = store.add(datos);
+                req.onsuccess = () => res(req.result);
+                req.onerror = (e) => rej(e);
+            });
+        }
+        async actualizarCambioAceite(id, datos) {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('aceite', 'readwrite');
+                const store = tx.objectStore('aceite');
+                const get = store.get(id);
+                get.onsuccess = () => {
+                    const obj = get.result;
+                    if (!obj) return rej('No encontrado');
+                    Object.assign(obj, datos);
+                    store.put(obj);
+                    tx.oncomplete = () => res();
+                };
+                get.onerror = (e) => rej(e);
+            });
+        }
+        async eliminarCambioAceite(id) {
+            return new Promise((res, rej) => {
+                const tx = this.db.transaction('aceite', 'readwrite');
+                const store = tx.objectStore('aceite');
+                store.delete(id);
+                tx.oncomplete = () => res();
+                tx.onerror = (e) => rej(e);
+            });
+        }
+    }
+
+    const db = new BD();
+    let config = {
+        capacidadTanque: 14,
+        consumoKmPorLitro: 40,
+        odoActual: null,
+        intervaloKm: 1500,
+        intervaloDias: 75
+    };
+
+    function toast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg; t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2500);
+    }
+
+    function formatearFecha(iso) {
+        if (!iso) return '';
+        const d = new Date(iso + 'T00:00:00');
+        return d.toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function mostrarPanel(id) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.nav-btn[data-panel="${id}"]`).classList.add('active');
+        if (id === 'panel-inicio') actualizarDashboard();
+        if (id === 'panel-historial') { cargarHistorial(); cargarAceite(); }
+    }
+
+    async function cargarConfig() {
+        const guardado = await db.obtenerConfig();
+        if (guardado.capacidadTanque) config.capacidadTanque = parseFloat(guardado.capacidadTanque);
+        if (guardado.consumoKmPorLitro) config.consumoKmPorLitro = parseFloat(guardado.consumoKmPorLitro);
+        if (guardado.odoActual) config.odoActual = parseFloat(guardado.odoActual);
+        if (guardado.intervaloKm) config.intervaloKm = parseFloat(guardado.intervaloKm);
+        if (guardado.intervaloDias) config.intervaloDias = parseFloat(guardado.intervaloDias);
+        document.getElementById('capacidad-tanque').value = config.capacidadTanque;
+        document.getElementById('consumo-kmpl').value = config.consumoKmPorLitro;
+        document.getElementById('odo-actual').value = config.odoActual || '';
+        document.getElementById('intervalo-km').value = config.intervaloKm;
+        document.getElementById('intervalo-dias').value = config.intervaloDias;
+    }
+
+    async function guardarAjustes() {
+        config.capacidadTanque = parseFloat(document.getElementById('capacidad-tanque').value) || 14;
+        config.consumoKmPorLitro = parseFloat(document.getElementById('consumo-kmpl').value) || 40;
+        config.intervaloKm = parseFloat(document.getElementById('intervalo-km').value) || 1500;
+        config.intervaloDias = parseFloat(document.getElementById('intervalo-dias').value) || 75;
+        await db.guardarConfig('capacidadTanque', config.capacidadTanque);
+        await db.guardarConfig('consumoKmPorLitro', config.consumoKmPorLitro);
+        await db.guardarConfig('intervaloKm', config.intervaloKm);
+        await db.guardarConfig('intervaloDias', config.intervaloDias);
+        toast('Ajustes guardados');
+        actualizarDashboard();
+    }
+
+    async function actualizarKilometraje() {
+        const input = document.getElementById('odo-actual');
+        let val = parseFloat(input.value);
+        if (isNaN(val) || val < 0) {
+            toast('Ingresa un kilometraje válido (ej: 6286.5)');
+            return;
+        }
+        // Si el valor es un número entero (sin decimal), preguntar si quizás falta el decimal
+        if (val % 1 === 0 && val > 0) {
+            const confirmar = confirm(
+                `Ingresaste un número entero (${val} km).\n` +
+                `¿Estás seguro? Normalmente el odómetro incluye un decimal (ej. 6286.5).\n` +
+                `Presiona Aceptar para guardar ${val} km o Cancelar para revisar.`
+            );
+            if (!confirmar) return;
+        }
+        config.odoActual = val;
+        await db.guardarConfig('odoActual', val);
+        toast('Kilometraje actualizado');
+        actualizarDashboard();
+    }
+
+    async function actualizarDashboard() {
+        // Gasolina
+        const llenados = await db.obtenerLlenados();
+        llenados.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        let ultimoLleno = null;
+        for (let i = llenados.length - 1; i >= 0; i--) {
+            if (llenados[i].tanqueLleno) { ultimoLleno = llenados[i]; break; }
+        }
+        document.getElementById('odo-mostrado').textContent = config.odoActual !== null ? config.odoActual.toFixed(1) + ' km' : '--';
+        document.getElementById('ultimo-llenado').textContent = ultimoLleno ? formatearFecha(ultimoLleno.fecha) : '--';
+
+        const barra = document.getElementById('barra-combustible');
+        barra.className = 'fuel-level';
+        document.getElementById('mensaje-alerta').textContent = '';
+        document.getElementById('distancia-recorrida').textContent = '--';
+        document.getElementById('consumo-usado').textContent = '--';
+        document.getElementById('restante-texto').textContent = '--';
+        document.getElementById('restante-porcentaje').textContent = '';
+        document.getElementById('autonomia-km').textContent = '--';
+
+        if (config.odoActual !== null && ultimoLleno) {
+            const odoLleno = ultimoLleno.odo;
+            if (config.odoActual <= odoLleno) {
+                document.getElementById('restante-texto').textContent = config.capacidadTanque.toFixed(1) + ' L';
+                document.getElementById('restante-porcentaje').textContent = '100%';
+                barra.style.width = '100%';
+                document.getElementById('distancia-recorrida').textContent = '0 km';
+                document.getElementById('autonomia-km').textContent = (config.capacidadTanque * config.consumoKmPorLitro).toFixed(0) + ' km';
+            } else {
+                const distancia = config.odoActual - odoLleno;
+                const usado = distancia / config.consumoKmPorLitro;
+                const restante = Math.max(0, config.capacidadTanque - usado);
+                const pct = Math.min(100, (restante / config.capacidadTanque) * 100);
+                document.getElementById('restante-texto').textContent = restante.toFixed(1) + ' L';
+                document.getElementById('restante-porcentaje').textContent = pct.toFixed(0) + '%';
+                barra.style.width = pct + '%';
+                document.getElementById('distancia-recorrida').textContent = distancia.toFixed(1) + ' km';
+                document.getElementById('consumo-usado').textContent = config.consumoKmPorLitro.toFixed(1) + ' km/L';
+                const autonomia = restante * config.consumoKmPorLitro;
+                document.getElementById('autonomia-km').textContent = autonomia.toFixed(0) + ' km';
+                if (pct <= 10) { barra.classList.add('danger'); document.getElementById('mensaje-alerta').textContent = '⚠️ ¡Reserva! Recarga pronto.'; }
+                else if (pct <= 20) { barra.classList.add('warning'); document.getElementById('mensaje-alerta').textContent = '⚡ Combustible bajo.'; }
+            }
+        } else if (config.odoActual === null) {
+            // nada
+        } else if (!ultimoLleno) {
+            document.getElementById('mensaje-alerta').textContent = '⚠️ Registra al menos un llenado con tanque lleno.';
+        }
+
+        // Aceite (igual)
+        const cambios = await db.obtenerCambiosAceite();
+        cambios.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        const ultimoCambio = cambios.length ? cambios[cambios.length - 1] : null;
+        const aceiteInfo = document.getElementById('aceite-info');
+        const aceiteAlerta = document.getElementById('aceite-alerta');
+        aceiteAlerta.style.display = 'none';
+        if (!ultimoCambio) {
+            aceiteInfo.innerHTML = '<p style="color: var(--text-secondary);">No hay cambios registrados.</p>';
+        } else {
+            const odoCambio = ultimoCambio.odo;
+            const fechaCambio = new Date(ultimoCambio.fecha + 'T00:00:00');
+            const ahora = new Date();
+            const diasTranscurridos = Math.floor((ahora - fechaCambio) / (1000 * 60 * 60 * 24));
+            let kmRecorridos = 0;
+            if (config.odoActual !== null && config.odoActual >= odoCambio) {
+                kmRecorridos = config.odoActual - odoCambio;
+            }
+            const kmRestantes = Math.max(0, config.intervaloKm - kmRecorridos);
+            const diasRestantes = Math.max(0, config.intervaloDias - diasTranscurridos);
+            let html = `<p>Último cambio: <strong>${formatearFecha(ultimoCambio.fecha)}</strong> (${ultimoCambio.tipo_aceite || 'No especificado'})</p>`;
+            html += `<p>Kilómetros recorridos desde cambio: <strong>${kmRecorridos.toFixed(0)} km</strong></p>`;
+            html += `<p>Días desde cambio: <strong>${diasTranscurridos} días</strong></p>`;
+            html += `<p>Faltan: <strong>${kmRestantes} km</strong> o <strong>${diasRestantes} días</strong> para el próximo cambio.</p>`;
+            aceiteInfo.innerHTML = html;
+
+            if (kmRestantes < 100 || diasRestantes < 10) {
+                let alertaTexto = '';
+                if (kmRestantes < 100 && diasRestantes >= 10) alertaTexto = `⚠️ Quedan menos de 100 km para el cambio de aceite.`;
+                else if (diasRestantes < 10 && kmRestantes >= 100) alertaTexto = `⚠️ Quedan menos de 10 días para el cambio de aceite.`;
+                else if (kmRestantes < 100 && diasRestantes < 10) alertaTexto = `⚠️ ¡Atención! Menos de 100 km y menos de 10 días para el cambio de aceite.`;
+                if (alertaTexto) {
+                    aceiteAlerta.innerHTML = `<strong>${alertaTexto}</strong>`;
+                    aceiteAlerta.style.display = 'block';
+                }
+            }
+        }
+    }
+
+    // Exportar / Importar
+    async function exportarDatos() {
+        const llenados = await db.obtenerLlenados();
+        const aceite = await db.obtenerCambiosAceite();
+        const configData = await db.obtenerConfig();
+        const exportObj = { llenados, aceite, config: configData, exportDate: new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gasolina-moto-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Datos exportados correctamente.');
+    }
+
+    async function importarDatos(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data.llenados || !Array.isArray(data.llenados) || !data.aceite || !data.config) {
+                    throw new Error('Formato de archivo incorrecto.');
+                }
+                if (!confirm(`¿Importar ${data.llenados.length} llenados, ${data.aceite.length} cambios de aceite y la configuración? Se reemplazarán todos los datos actuales.`)) return;
+
+                // Limpiar stores e importar
+                const tx = db.db.transaction(['llenados', 'aceite', 'config'], 'readwrite');
+                tx.objectStore('llenados').clear();
+                tx.objectStore('aceite').clear();
+                tx.objectStore('config').clear();
+                tx.oncomplete = async () => {
+                    // Agregar datos
+                    for (const l of data.llenados) {
+                        const { id, ...clean } = l;
+                        await db.agregarLlenado(clean);
+                    }
+                    for (const a of data.aceite) {
+                        const { id, ...clean } = a;
+                        await db.agregarCambioAceite(clean);
+                    }
+                    for (const [clave, valor] of Object.entries(data.config)) {
+                        await db.guardarConfig(clave, valor);
+                    }
+                    await cargarConfig();
+                    actualizarDashboard();
+                    cargarHistorial();
+                    cargarAceite();
+                    toast('Datos importados correctamente.');
+                };
+                tx.onerror = (err) => {
+                    toast('Error al importar: ' + err.target.error);
+                };
+            } catch (ex) {
+                toast('Error al leer el archivo: ' + ex.message);
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // Llenados (sin cambios)
+    function mostrarFormularioNuevo() {
+        document.getElementById('edit-id').value = '';
+        document.getElementById('form-title').textContent = 'Nuevo llenado';
+        document.getElementById('form-llenado').reset();
+        document.getElementById('fecha').valueAsDate = new Date();
+        document.getElementById('tanque-lleno').checked = true;
+        document.getElementById('form-card').style.display = 'block';
+    }
+    async function editarLlenado(id) {
+        const llenados = await db.obtenerLlenados();
+        const ll = llenados.find(l => l.id === id);
+        if (!ll) return;
+        document.getElementById('edit-id').value = id;
+        document.getElementById('fecha').value = ll.fecha;
+        document.getElementById('odo-llenado').value = ll.odo;
+        document.getElementById('litros').value = ll.litros || '';
+        document.getElementById('tanque-lleno').checked = ll.tanqueLleno;
+        document.getElementById('form-title').textContent = 'Editar llenado';
+        document.getElementById('form-card').style.display = 'block';
+    }
+    function cancelarFormulario() { document.getElementById('form-card').style.display = 'none'; }
+    async function cargarHistorial() {
+        const llenados = await db.obtenerLlenados();
+        llenados.sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+        const lista = document.getElementById('lista-llenados');
+        if (llenados.length === 0) {
+            lista.innerHTML = '<p style="color: var(--text-secondary);">No hay llenados aún.</p>';
+            return;
+        }
+        lista.innerHTML = llenados.map(ll => `
+            <div class="record-item">
+                <div class="record-info">
+                    <div><strong>${formatearFecha(ll.fecha)}</strong></div>
+                    <div>${ll.odo} km • ${ll.litros || '--'} L</div>
+                    <div style="font-size:0.8rem; color: var(--text-secondary);">${ll.tanqueLleno ? '✅ Lleno' : '⚠️ Parcial'}</div>
+                </div>
+                <div class="record-actions">
+                    <button class="icon-btn" onclick="editarLlenado(${ll.id})">✏️</button>
+                    <button class="icon-btn" onclick="eliminarLlenado(${ll.id})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    async function eliminarLlenado(id) {
+        if (!confirm('¿Eliminar este llenado?')) return;
+        await db.eliminarLlenado(id);
+        toast('Llenado eliminado');
+        cargarHistorial();
+        actualizarDashboard();
+    }
+
+    // Aceite (sin cambios)
+    function mostrarFormularioAceiteNuevo() {
+        document.getElementById('aceite-edit-id').value = '';
+        document.getElementById('form-aceite-title').textContent = 'Nuevo cambio de aceite';
+        document.getElementById('form-aceite').reset();
+        document.getElementById('aceite-fecha').valueAsDate = new Date();
+        document.getElementById('form-aceite-card').style.display = 'block';
+    }
+    async function editarCambioAceite(id) {
+        const cambios = await db.obtenerCambiosAceite();
+        const c = cambios.find(a => a.id === id);
+        if (!c) return;
+        document.getElementById('aceite-edit-id').value = id;
+        document.getElementById('aceite-fecha').value = c.fecha;
+        document.getElementById('aceite-odo').value = c.odo;
+        document.getElementById('tipo-aceite').value = c.tipo_aceite || '';
+        document.getElementById('form-aceite-title').textContent = 'Editar cambio de aceite';
+        document.getElementById('form-aceite-card').style.display = 'block';
+    }
+    function cancelarFormularioAceite() { document.getElementById('form-aceite-card').style.display = 'none'; }
+    async function cargarAceite() {
+        const cambios = await db.obtenerCambiosAceite();
+        cambios.sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+        const lista = document.getElementById('lista-aceite');
+        if (cambios.length === 0) {
+            lista.innerHTML = '<p style="color: var(--text-secondary);">No hay cambios registrados.</p>';
+            return;
+        }
+        lista.innerHTML = cambios.map(c => `
+            <div class="record-item">
+                <div class="record-info">
+                    <div><strong>${formatearFecha(c.fecha)}</strong></div>
+                    <div>${c.odo} km • ${c.tipo_aceite || 'N/D'}</div>
+                </div>
+                <div class="record-actions">
+                    <button class="icon-btn" onclick="editarCambioAceite(${c.id})">✏️</button>
+                    <button class="icon-btn" onclick="eliminarCambioAceite(${c.id})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    async function eliminarCambioAceite(id) {
+        if (!confirm('¿Eliminar este cambio de aceite?')) return;
+        await db.eliminarCambioAceite(id);
+        toast('Cambio eliminado');
+        cargarAceite();
+        actualizarDashboard();
+    }
+
+    // Eventos formularios
+    document.getElementById('form-llenado').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const editId = document.getElementById('edit-id').value;
+        const fecha = document.getElementById('fecha').value;
+        const odo = parseFloat(document.getElementById('odo-llenado').value);
+        const litros = parseFloat(document.getElementById('litros').value) || null;
+        const tanqueLleno = document.getElementById('tanque-lleno').checked;
+        if (!fecha || isNaN(odo)) { toast('Completa la fecha y el kilometraje.'); return; }
+        const datos = { fecha, odo, litros, tanqueLleno };
+        try {
+            if (editId) {
+                await db.actualizarLlenado(Number(editId), datos);
+                toast('Llenado actualizado');
+            } else {
+                await db.agregarLlenado(datos);
+                toast('Llenado guardado');
+                if (tanqueLleno && (config.odoActual === null || odo >= config.odoActual)) {
+                    config.odoActual = odo;
+                    await db.guardarConfig('odoActual', odo);
+                    document.getElementById('odo-actual').value = odo;
+                }
+            }
+            cancelarFormulario();
+            cargarHistorial();
+            actualizarDashboard();
+        } catch (error) { toast('Error al guardar: ' + error); }
+    });
+
+    document.getElementById('form-aceite').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const editId = document.getElementById('aceite-edit-id').value;
+        const fecha = document.getElementById('aceite-fecha').value;
+        const odo = parseFloat(document.getElementById('aceite-odo').value);
+        const tipo = document.getElementById('tipo-aceite').value.trim();
+        if (!fecha || isNaN(odo)) { toast('Completa la fecha y el kilometraje.'); return; }
+        const datos = { fecha, odo, tipo_aceite: tipo || 'No especificado' };
+        try {
+            if (editId) {
+                await db.actualizarCambioAceite(Number(editId), datos);
+                toast('Cambio actualizado');
+            } else {
+                await db.agregarCambioAceite(datos);
+                toast('Cambio de aceite guardado');
+            }
+            cancelarFormularioAceite();
+            cargarAceite();
+            actualizarDashboard();
+        } catch (error) { toast('Error al guardar: ' + error); }
+    });
+
+    window.addEventListener('load', async () => {
+        await db.abrir();
+        await cargarConfig();
+        document.getElementById('fecha').valueAsDate = new Date();
+        document.getElementById('aceite-fecha').valueAsDate = new Date();
+        actualizarDashboard();
+        cargarHistorial();
+        cargarAceite();
+        mostrarPanel('panel-inicio');
+    });
+</script>
+</body>
+</html>
